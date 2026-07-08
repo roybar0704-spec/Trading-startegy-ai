@@ -1,0 +1,14 @@
+sl_buffer_usd:      {default: 0.30, grid: [0.10, 0.20, 0.30, 0.50]}
+min_stop_k_spread:  {default: 3.0,  grid: [2.0, 3.0, 4.0]}
+displacement:
+  model: {default: D1, experiment_levels: [D1, D2, D3, D4, D5]}
+  d1:    {body_vs_avg_n: 10, ratio_min: {default: 1.5, grid: [1.25, 1.5, 2.0]}}
+costs:
+  slippage_stop_usd:   {default: 0.10}
+  news_slip_mult:      {default: 3.0}
+  slippage_market_usd: {default: 0.05}
+  commission_per_unit: {default: 0.0}
+  execution_delay_ms:  {default: 0, robustness: [250, 500]}
+warmup_days: 90
+tick_on_demand_band_usd: 1.00         # מרחק הפעלת רזולוציית Tick סביב SL/TP/גבול FVG
+scoring_weights: {fvg_level: 0.4, ts: 0.2, sweep_quality: 0.2, bias_recency: 0.2}

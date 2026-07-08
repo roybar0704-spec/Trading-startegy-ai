@@ -1,0 +1,69 @@
+[project]
+name = "xauusd-research"
+version = "0.1.0"
+description = "XAUUSD SMC research platform — realistic backtesting and anti-bias research protocol (not an indicator)."
+requires-python = ">=3.11"
+dependencies = [
+    "polars>=1.9",
+    "pyarrow>=17.0",
+    "numpy>=2.0",
+    "duckdb>=1.1",
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "plotly>=5.24",
+    "tzdata>=2024.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.7",
+    "pylint>=3.3",
+    "import-linter>=2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"scripts/**" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "tests"]
+
+# Architecture Gate (docs/QUALITY_GATES.md #4): the target layering is
+# data <- store <- {structure, fvg, displacement} <- entry <- {risk, execution}
+# <- backtest <- journal, with {features, ai, viz, stats, validation, scoring}
+# forbidden from importing any engine module. import-linter requires every
+# named module to exist, so contracts are added module-by-module as each
+# Phase actually builds that module (Phase 0 only has src.data + src.config)
+# rather than declared in bulk against code that doesn't exist yet.
+[tool.importlinter]
+root_package = "src"
+
+[[tool.importlinter.contracts]]
+name = "Config has no engine dependencies"
+type = "forbidden"
+source_modules = ["src.config"]
+forbidden_modules = ["src.data"]

@@ -1,0 +1,56 @@
+spec_version: "1.0"
+instrument: XAUUSD
+data_source: dukascopy_ticks          # מקור אמת יחיד
+structure_price: mid
+htf_anchor: NY_CLOSE_17ET             # נרות 4H: 17/21/01/05/09/13 ET
+
+session:
+  tz: America/New_York
+  window: ["08:30", "10:30"]
+  sequence_scope: R_S_entry_in_window # H1: סגירת R, סגירת S והכניסה בתוך החלון
+  cancel_pending_at_close: true
+
+bias:
+  source_tf: 4H
+  neutral_policy: no_trade
+  on_flip: {open_position: keep_and_tag, pending_orders: cancel}
+
+fvg_4h:
+  min_size: null
+  valid_until: full_mitigation        # 100%, נמדד על Mid
+  age_limit: null
+  ranking: [bos, displacement, plain, proximity]
+
+trigger:                              # קריאה 2 — נעול
+  reaction_r: {in_zone: true, body_direction: with_zone, lower_wick_required: true}
+  r_replacement: latest_qualifier
+  r_reset_on_close_through: true
+  sweep_s: {low_below_r_low: true, close_back_above_r_low: true}
+  ifvg:
+    candidate: bearish_1m_fvg_since_engagement
+    inversion: full_close_beyond_top
+    after_s_close_only: true
+    selection: first_inversion_then_highest_top
+    rearm: false
+  no_ifvg_outcome: logged
+
+risk:
+  sizing_pct: 0.005
+  equity_base: realized_balance
+  tp_rr: 3.0
+  quota_fills_per_day: 2              # פר תיק, יום NY
+  same_zone_reentry: allowed_tagged
+
+news_filter:
+  currency: [USD]
+  impact: [red]
+  blackout_min: {before: 30, after: 30}
+  pending_on_blackout: cancel
+  open_position_on_news: keep_and_tag
+
+holding: {overnight: allowed_tagged, weekend: allowed_tagged}
+
+execution:
+  limit_fill: ask_leq_price_no_positive_slippage
+  fallback_no_ticks: sl_first
+  gap_through: first_available_price_plus_slippage

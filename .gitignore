@@ -1,0 +1,13 @@
+/data/
+benchmarks/_scratch_ticks/
+*.parquet
+*.duckdb
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+dist/
+build/
+.env

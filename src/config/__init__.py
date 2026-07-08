@@ -1,0 +1,1 @@
+"""Frozen-config integrity utilities."""

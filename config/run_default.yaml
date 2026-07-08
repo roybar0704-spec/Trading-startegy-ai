@@ -1,0 +1,11 @@
+experiment: "E1_arm_selection"
+objective: "oos_wf_expectancy_r"      # נעול; שונה מהמוצהר ב-Experiment → חריגה
+guards: {p_vs_baseline_max: 0.05, pf_min: 1.3, min_trades: 150, worst_quarter_r_min: -15}
+period: {start: 2023-01-01, end: 2025-12-31}
+holdout: {last_months: 6, unlocked: false}
+walk_forward: {train_months: 9, test_months: 3}
+arms:
+  entry_models: [M1, M2, M4]
+  sl_anchors: [R_body, S_body, S_wick]   # 9 תיקים, Stream זהה
+baseline: {n_sims: 1000, seed: 42}
+seed: 42
