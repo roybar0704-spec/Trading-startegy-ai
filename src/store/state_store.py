@@ -120,6 +120,10 @@ class StateStore:
         """The swing_id of a BOS recorded on ``tf`` at exactly ``ts``, if any."""
         return self._bos_by_tf[tf].get(ts)
 
+    def bias_history(self) -> list[BiasEvent]:
+        """Full, chronological history of Bias *transitions* recorded so far."""
+        return list(self._bias_events)
+
 
 class MarketContext:
     """Read-only, point-in-time view of a StateStore. Valid only for the tick it was built for."""
@@ -131,7 +135,7 @@ class MarketContext:
 
     def bias(self) -> BiasState:
         """The Bias state as of ``now`` (docs/SPEC_V1_FROZEN.md §3)."""
-        visible = [e for e in self._store._bias_events if e.ts <= self.now]  # noqa: SLF001
+        visible = [e for e in self._store.bias_history() if e.ts <= self.now]
         return visible[-1].state if visible else "neutral"
 
     def active_fvgs(self, tf: TF, direction: str) -> list[FVG]:

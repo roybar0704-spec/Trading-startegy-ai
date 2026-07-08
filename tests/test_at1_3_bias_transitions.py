@@ -49,7 +49,7 @@ def test_at_1_3_bias_transitions():
 
     assert bos_kinds == ["BOS", "BOS", "BOS", "BOS"]
 
-    states = [e.state for e in store._bias_events]  # noqa: SLF001
+    states = [e.state for e in store.bias_history()]
     assert states == ["bullish", "bearish", "bullish"], (
         "history must match TRANSITIONS only: the 2nd down-BOS is a continuation, not a new one"
     )

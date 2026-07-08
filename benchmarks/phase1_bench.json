@@ -1,10 +1,10 @@
 {
-  "measured_at": "2026-07-08T18:45:56.687843+00:00",
+  "measured_at": "2026-07-08T19:13:14.468715+00:00",
   "bar_count": 2190,
-  "seconds": 0.0114,
-  "bars_per_second": 191469.5,
+  "seconds": 0.0108,
+  "bars_per_second": 203092.7,
   "swings": 951,
   "fvgs": 449,
-  "peak_rss_mb": 34.2,
+  "peak_rss_mb": 34.1,
   "note": "No pre-declared Phase 1 budget in QUALITY_GATES.md; this establishes D-032's initial measurement."
 }

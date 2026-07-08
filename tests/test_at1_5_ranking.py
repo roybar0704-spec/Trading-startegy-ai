@@ -4,7 +4,7 @@
 from datetime import UTC, datetime, timedelta
 
 from src.core.types import FVG, TF
-from src.displacement.d1_body import D1BodyRatio
+from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.fvg.engine import FVGEngine
 from src.fvg.ranking import sort_by_priority
 from src.store.state_store import StateStore
@@ -33,7 +33,9 @@ def test_at_1_5_displacement_and_bos_yields_level_3():
 
     store = StateStore()
     structure = StructureEngine(TF.H4, is_bias_source=True)
-    fvg_engine = FVGEngine(TF.H4, displacement_model=D1BodyRatio(), displacement_params={})
+    fvg_engine = FVGEngine(
+        TF.H4, displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS
+    )
 
     formed = []
     for bar in bars:

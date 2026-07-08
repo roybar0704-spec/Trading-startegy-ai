@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import plotly.graph_objects as go
 
 from src.core.types import TF, Bar
-from src.displacement.d1_body import D1BodyRatio
+from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.fvg.engine import FVGEngine
 from src.store.state_store import StateStore
 from src.structure.engine import StructureEngine
@@ -60,7 +60,9 @@ def run_engines(bars: list[Bar]) -> tuple[StateStore, list, list[Bar]]:
     """Run Structure+FVG over ``bars``; return (store, bos_sweep_events, bars)."""
     store = StateStore()
     structure = StructureEngine(TF.H4, is_bias_source=True)
-    fvg_engine = FVGEngine(TF.H4, displacement_model=D1BodyRatio(), displacement_params={})
+    fvg_engine = FVGEngine(
+        TF.H4, displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS
+    )
     events = []
     for bar in bars:
         events.extend(structure.step(bar, store))
@@ -139,8 +141,9 @@ def build_chart(
             layer="below",
         )
 
-    bias_ts = [period_start] + [e.ts for e in store._bias_events]  # noqa: SLF001
-    bias_state = ["neutral"] + [e.state for e in store._bias_events]  # noqa: SLF001
+    bias_history = store.bias_history()
+    bias_ts = [period_start] + [e.ts for e in bias_history]
+    bias_state = ["neutral"] + [e.state for e in bias_history]
     fig.add_trace(
         go.Scatter(
             x=bias_ts,
@@ -184,8 +187,8 @@ def main() -> None:
     print(f"BOS: {bos_count}   Sweep: {sweep_count}")
     print(f"FVGs: {len(fvgs)}  (L1={sum(1 for f in fvgs if f.level == 1)}, "
           f"L2={sum(1 for f in fvgs if f.level == 2)}, L3={sum(1 for f in fvgs if f.level == 3)})")
-    print(f"bias transitions: {len(store._bias_events)}")  # noqa: SLF001
-    for e in store._bias_events:  # noqa: SLF001
+    print(f"bias transitions: {len(store.bias_history())}")
+    for e in store.bias_history():
         print(f"  {e.ts.isoformat()} -> {e.state}")
 
     fig = build_chart(store, events, bars, start)

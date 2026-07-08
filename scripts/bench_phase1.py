@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.core.types import TF, Bar
-from src.displacement.d1_body import D1BodyRatio
+from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.fvg.engine import FVGEngine
 from src.store.state_store import StateStore
 from src.structure.engine import StructureEngine
@@ -58,7 +58,9 @@ def main() -> None:
 
     store = StateStore()
     structure = StructureEngine(TF.H4, is_bias_source=True)
-    fvg_engine = FVGEngine(TF.H4, displacement_model=D1BodyRatio(), displacement_params={})
+    fvg_engine = FVGEngine(
+        TF.H4, displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS
+    )
 
     t0 = time.perf_counter()
     for bar in bars:
