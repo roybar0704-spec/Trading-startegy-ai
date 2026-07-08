@@ -30,6 +30,7 @@ Data: DukascopyDownloader(bi5+LZMA, cache immutable) → Validator → BarBuilde
 4. **Multi-Portfolio Paired Design:** 9 תיקים ({M1,M2,M4}×{R,S,Wick}) על Setup Stream זהה. בתוך מודל כניסה — כניסה זהה לשלוש זרועות SL → השוואה זוגית טהורה של עוגן הסטופ. לכל תיק: הון, מכסה ו-Equity Curve משלו.
 5. **Reproducibility:** ריצה = `(config_hash, data_version, code_version)`; Append-Only Tracker; Seed לכל אקראיות.
 6. **Hold-Out פיזי:** `data/holdout/` נפרד; Loader מסרב בלי דגל מתועד.
+7. **עצמאות ממקור נתונים (D-037):** כל מודול משכבת ה-Structure ומעלה צורך רק את הטיפוסים הנייטרליים ממקור (`Tick`/`Bar`/`MarketContext`) או את הפרוטוקול `DataProvider` (INTERFACES.md) — לעולם לא `DukascopyDownloader` באופן קונקרטי, ולעולם לא ענף קוד המבחין בין "סינתטי" ל"אמיתי". אותו קוד בדיוק חייב לרוץ זהה בין Fixture סינתטי (Phase 1–2) לבין דאטה אמיתי מ-Dukascopy (מ-Phase 3 ואילך) — ההבדל היחיד המותר הוא איזה מימוש של `DataProvider`/אילו אובייקטי `Bar` הוזרקו לריצה. זה מה שהופך את הבדיקות ב-Fixtures ל-Phase 1–2 לתקפות: הן בודקות בדיוק את אותו קוד שירוץ על הדאטה האמיתי, לא חיקוי נפרד שלו.
 
 ## לולאת האירועים (פסאודו)
 ```python

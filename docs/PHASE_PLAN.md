@@ -8,16 +8,20 @@
 - T0.4 Validator: חורים, סופ"ש, DST, spike-flagging (דגלול, לא מחיקה).
 - T0.5 BarBuilder 1M/5M/4H (עוגן NY-Close) — נבנה מ-Ticks בלבד.
 - T0.6 דו"ח ספרד לפי שעה + הפרדה פיזית של `data/holdout/` (6 חודשים אחרונים).
-**Gate:** AT-0.* ירוקות; 3 שנות דאטה נקיות; דו"ח ספרד מוצג למשתמש.
+
+**Gate (מפוצל — D-036):**
+- **תת-שער קוד (סגור):** AT-0.1–AT-0.7 ירוקות מול Fixtures סינתטיים שמדמים במדויק את פורמט ה-wire של Dukascopy; כל שאר Quality Gates ירוקים.
+- **תת-שער דאטה (פתוח, KI-001/KI-002):** 3 שנות דאטה אמיתי נקיות + דו"ח ספרד אמיתי מוצג למשתמש + כיול RA-10 — טרם קיימים (סביבת הפיתוח חוסמת רשת ל-Dukascopy). **אינו חוסם Phase 1–2** (הבדיקות שלהם מתוכננות על Fixtures סינתטיים לפי ACCEPTANCE_TESTS.md ואינן תלויות בדאטה אמיתי). **חוסם באופן מוחלט את T3.4 ואת Phase 4–5** — ר' "Research Readiness Review" לפני Phase 3 למטה.
 
 ## Phase 1 — State Store + Structure Engines
+**עקרון מחייב לכל מודול בפאזה זו (D-037, ר' ARCHITECTURE.md): עצמאות ממקור נתונים.** כל מודול חייב לפעול ללא שינוי קוד בין Fixture סינתטי לבין דאטה אמיתי מ-Dukascopy — ההבדל היחיד מותר להיות מקור הקלט (איזה `DataProvider`/`Bar`/`Tick` מוזרק), לעולם לא ענפי קוד שונים.
 - T1.1 State Store + MarketContext (as-of, read-only).
 - T1.2 Fractals (confirmed_at = סגירת נר 3), BOS (close-through), Sweep.
 - T1.3 Bias State Machine + bias_history.
 - T1.4 FVG Engine: זיהוי, Mitigation חי (Mid, 1M/Tick), דירוג L1–L3, עדיפות.
 - T1.5 Displacement D1 (BodyRatio) בלבד; ממשק D2–D5 מוכן, לא ממומש.
 - T1.6 בדיקות Fixtures סינתטיות + Prefix-Consistency ב-CI.
-**Gate:** AT-1.*; Prefix-Consistency ירוק על Fixture דו-שבועי.
+**Gate:** AT-1.*; Prefix-Consistency ירוק על Fixture דו-שבועי; אין בקוד שום ענף/תנאי שמבחין בין מקור נתונים סינתטי לאמיתי.
 
 ## Phase 2 — Execution Layer
 - T2.1 Cost Model: ספרד מהדאטה, Slippage-Stop (×3 בחדשות), Delay, Commission.
@@ -30,7 +34,10 @@
 - T3.1 Session+Calendar Engines: חלון, Blackout, ביטולים, effective_window, day_roll.
 - T3.2 Setup Stream: ה-State Machine המלא (R/S/iFVG, כל הפסילות, כל התוצאות הסופיות).
 - T3.3 Orchestrator דו-שלבי + Journal writer.
-- T3.4 ריצה מלאה על 3 חודשי In-Sample עם זרוע אחת: M2 × S_body.
+
+**⛔ שער חובה לפני T3.4 — Research Readiness Review (D-037):** ריצת בקטסט אמיתית ראשונה (T3.4) אסורה עד שהושלמה סקירת מוכנות-מחקר מסודרת ומתועדת לפי `docs/RESEARCH_READINESS_REVIEW.md`. אם סעיף כלשהו בסקירה נכשל — עוצרים את הפרויקט לפני T3.4 ומפיקים דוח מפורט במקום להמשיך. אין לדלג על השער הזה גם אם הבדיקות הטכניות (pytest/ruff) ירוקות.
+
+- T3.4 ריצה מלאה על 3 חודשי In-Sample עם זרוע אחת: M2 × S_body. **דורש Research Readiness Review = GO.**
 - T3.5 Viz בסיסי: דף עסקה עם כל הסימונים.
 - T3.6 Context Snapshots: לכידה נקודתית-בזמן ב-engagement/armed/entry/exit לכל Setup — התשתית של ה-Feature Store (FEATURE_SPEC_V1).
 **Gate:** AT-3.*; **20 עסקאות מדגם מאומתות ידנית על הגרף מול היומן** + אישור משתמש שהלוגיקה = הכוונה.
