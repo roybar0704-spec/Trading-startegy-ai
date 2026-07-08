@@ -67,3 +67,9 @@ name = "Config has no engine dependencies"
 type = "forbidden"
 source_modules = ["src.config"]
 forbidden_modules = ["src.data"]
+
+[[tool.importlinter.contracts]]
+name = "core is dependency-free (D-038)"
+type = "forbidden"
+source_modules = ["src.core"]
+forbidden_modules = ["src.config", "src.data"]

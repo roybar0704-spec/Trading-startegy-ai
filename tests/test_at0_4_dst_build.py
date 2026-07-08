@@ -8,8 +8,8 @@ from zoneinfo import ZoneInfo
 import polars as pl
 import pytest
 
+from src.core.types import TF
 from src.data.bar_builder import BarBuilder
-from src.data.types import TF
 
 NY = ZoneInfo("America/New_York")
 

@@ -27,10 +27,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import polars as pl
 
 from src.config.frozen_guard import verify_frozen_rules
+from src.core.types import TF
 from src.data.bar_builder import BarBuilder
 from src.data.dukascopy_downloader import DukascopyDownloader, DukascopyFetchError
 from src.data.spread_report import build_spread_report
-from src.data.types import TF
 from src.data.validator import Validator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

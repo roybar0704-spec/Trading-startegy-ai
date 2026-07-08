@@ -5,8 +5,8 @@ from datetime import UTC, datetime, timedelta
 
 import polars as pl
 
+from src.core.types import TF
 from src.data.bar_builder import BarBuilder
-from src.data.types import TF
 
 
 def test_at_0_6_bar_tick_consistency():

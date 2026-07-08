@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import polars as pl
 
-from src.data.types import TF, Bar
+from src.core.types import TF, Bar
 
 NY = ZoneInfo("America/New_York")
 H4_ANCHOR_HOURS_ET = (1, 5, 9, 13, 17, 21)

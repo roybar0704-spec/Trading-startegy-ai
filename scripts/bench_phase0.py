@@ -22,10 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.demo_phase0 import _synthetic_month
 
+from src.core.types import TF
 from src.data.bar_builder import BarBuilder
 from src.data.spread_report import build_spread_report
 from src.data.tick_store import TickParquetStore
-from src.data.types import TF
 from src.data.validator import Validator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
