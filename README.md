@@ -12,7 +12,8 @@ phase starts.
 
 ## Status
 
-**Phase 0 — Data Pipeline** (see `docs/PHASE_PLAN.md`).
+**Phase 0 — Data Pipeline**: code-complete, data-pending (D-036; see `docs/KNOWN_ISSUES.md` KI-001/KI-002).
+**Phase 1 — State Store + Structure Engines**: in progress (see `docs/PHASE_PLAN.md`).
 
 ## Setup
 
@@ -27,8 +28,10 @@ uv sync --extra dev
 pytest -q                     # acceptance tests
 ruff check src tests scripts  # lint
 scripts/ci.sh                 # full local CI (lint + tests + frozen-config integrity)
-python scripts/demo_phase0.py --month 2024-03   # Phase 0 demo
-python scripts/bench_phase0.py                  # Phase 0 performance benchmark
+python scripts/demo_phase0.py --month 2024-03                     # Phase 0 demo
+python scripts/bench_phase0.py                                    # Phase 0 performance benchmark
+python scripts/demo_phase1.py --period 2024-01-01:2024-02-01      # Phase 1 demo (chart)
+python scripts/bench_phase1.py                                    # Phase 1 performance benchmark
 ```
 
 ## Known environment constraint

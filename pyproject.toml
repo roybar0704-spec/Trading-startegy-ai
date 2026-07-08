@@ -73,3 +73,13 @@ name = "core is dependency-free (D-038)"
 type = "forbidden"
 source_modules = ["src.core"]
 forbidden_modules = ["src.config", "src.data"]
+
+[[tool.importlinter.contracts]]
+name = "Engine layering (Phase 1: data <- store <- displacement <- {structure, fvg})"
+type = "layers"
+layers = [
+    "src.structure | src.fvg",
+    "src.displacement",
+    "src.store",
+    "src.data",
+]

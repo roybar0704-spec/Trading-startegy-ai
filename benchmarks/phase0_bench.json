@@ -1,21 +1,21 @@
 {
-  "measured_at": "2026-07-08T17:49:00.662120+00:00",
+  "measured_at": "2026-07-08T18:45:56.533081+00:00",
   "data_source": "synthetic (real Dukascopy access unavailable in this environment)",
   "tick_count_one_month": 362880,
   "seconds": {
-    "validate": 0.0191,
-    "build_bars_1m_5m_4h": 0.1708,
-    "spread_report": 0.0203,
-    "parquet_write": 0.0468,
-    "total_one_month": 0.257
+    "validate": 0.0251,
+    "build_bars_1m_5m_4h": 0.2217,
+    "spread_report": 0.0198,
+    "parquet_write": 0.0362,
+    "total_one_month": 0.3028
   },
   "bar_counts": {
     "1M": 30240,
     "5M": 6048,
     "4H": 128
   },
-  "peak_rss_mb": 199.0,
-  "extrapolated_36_months_seconds": 9.3,
+  "peak_rss_mb": 193.7,
+  "extrapolated_36_months_seconds": 10.9,
   "budget_3yr_seconds": 3600,
   "within_budget_extrapolated": true,
   "note": "Extrapolated linearly from one synthetic month; real tick density and I/O characteristics differ from Dukascopy's actual feed. Must be re-measured against a real 3-year download before this budget is treated as calibrated (D-032)."
