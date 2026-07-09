@@ -28,6 +28,8 @@ from typing import Literal
 
 from src.core.types import FVG, TF, Swing
 from src.data.spread_report import SpreadReport
+from src.session.calendar_engine import CalendarEngine
+from src.session.session_engine import SessionEngine
 
 BiasState = Literal["bullish", "bearish", "neutral"]
 
@@ -52,13 +54,24 @@ def _fvg_effective_ts(fvg: FVG) -> datetime:
 class StateStore:
     """Write side for structure/fvg engines; read side is only via ``as_of``."""
 
-    def __init__(self, spread_report: SpreadReport | None = None) -> None:
-        """Create an empty store. ``spread_report`` backs ``median_spread`` (D-039)."""
+    def __init__(
+        self,
+        spread_report: SpreadReport | None = None,
+        session_engine: SessionEngine | None = None,
+        calendar_engine: CalendarEngine | None = None,
+    ) -> None:
+        """Create an empty store.
+
+        Optional engines back ``median_spread``/``in_window``/``in_blackout`` (D-039);
+        each raises ``NotImplementedError`` until wired, same pattern for all three.
+        """
         self._swing_versions: dict[str, list[Swing]] = {}
         self._fvg_versions: dict[str, list[FVG]] = {}
         self._bias_events: list[BiasEvent] = []
         self._bos_by_tf: dict[TF, dict[datetime, str]] = defaultdict(dict)
         self._spread_report = spread_report
+        self._session_engine = session_engine
+        self._calendar_engine = calendar_engine
 
     def put(self, obj: Swing | FVG | BiasEvent) -> None:
         """Append a new version of a Swing/FVG, or record a BiasEvent."""
@@ -135,6 +148,24 @@ class StateStore:
             )
         return self._spread_report.median_spread(hour_et)
 
+    def in_window(self, ts: datetime) -> bool:
+        """Whether ``ts`` is inside the NY session window (SessionEngine wired in, T3.1)."""
+        if self._session_engine is None:
+            raise NotImplementedError(
+                "No SessionEngine wired into this StateStore (D-039); construct it with "
+                "StateStore(session_engine=...) to use in_window()."
+            )
+        return self._session_engine.in_window(ts)
+
+    def in_blackout(self, ts: datetime) -> bool:
+        """Whether ``ts`` is inside a news Blackout, from the CalendarEngine wired in (T3.1)."""
+        if self._calendar_engine is None:
+            raise NotImplementedError(
+                "No CalendarEngine wired into this StateStore (D-039); construct it with "
+                "StateStore(calendar_engine=...) to use in_blackout()."
+            )
+        return self._calendar_engine.in_blackout(ts)
+
 
 class MarketContext:
     """Read-only, point-in-time view of a StateStore. Valid only for the tick it was built for."""
@@ -171,12 +202,12 @@ class MarketContext:
         )
 
     def in_window(self) -> bool:
-        """Whether ``now`` is inside the NY session window. Not implemented until T3.1 (D-039)."""
-        raise NotImplementedError("Session Engine not built until Phase 3 T3.1 (D-039)")
+        """Whether ``now`` is inside the NY session window (T3.1)."""
+        return self._store.in_window(self.now)
 
     def in_blackout(self) -> bool:
-        """Whether ``now`` is inside a news blackout. Not implemented until T3.1 (D-039)."""
-        raise NotImplementedError("Calendar Engine not built until Phase 3 T3.1 (D-039)")
+        """Whether ``now`` is inside a news blackout (T3.1)."""
+        return self._store.in_blackout(self.now)
 
     def median_spread(self, hour_et: int) -> float:
         """Median spread (USD) for an ET hour, from the SpreadReport wired into the store."""

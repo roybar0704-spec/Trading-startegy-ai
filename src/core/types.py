@@ -152,3 +152,28 @@ class Rejection:
 
     setup_id: str
     reason: str
+
+
+@dataclass(frozen=True)
+class NewsEvent:
+    """A single calendar entry (db/schema.sql ``news_events``, RA-23)."""
+
+    ts_utc: datetime
+    currency: str
+    impact: str
+    title: str
+    source: str
+
+
+@dataclass
+class SetupArmOutcome:
+    """Per-(setup, portfolio) result (D-052) -- never stored on ``Setup`` itself."""
+
+    setup_id: str
+    portfolio_id: PortfolioId
+    outcome: Literal[
+        "pending", "closed", "expired", "invalidated", "blocked_news", "blocked_quota",
+        "invalid_geometry",
+    ]
+    outcome_reason: str | None = None
+    order_id: str | None = None
