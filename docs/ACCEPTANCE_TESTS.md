@@ -33,12 +33,13 @@
 - **AT-3.2 R replacement + reset:** מועמד R חדש מחליף; נר Close-Through מתחת R.low → חזרה ל-ZONE_ENGAGED.
 - **AT-3.3 S rules:** low<R.low בלי close>R.low → לא Sweep; שניהם → SWEEP_CONFIRMED.
 - **AT-3.4 iFVG:** Inversion בסגירה בלבד (Wick-through לא); לפני סגירת S לא נספר; ראשון נבחר; Multi-gap → top הגבוה.
-- **AT-3.5 פסילות:** Re-Inversion / שבירת S.low / Mitigation-100% / Bias-flip / Blackout → מצב סופי נכון + ביטול פקודות.
+- **AT-3.5 פסילות:** Re-Inversion / שבירת S.low / Mitigation-100% / Bias-flip / Blackout → מצב סופי נכון ב-`setups.outcome` (model-agnostic) **וגם** קסקדה נכונה ל-`setup_arm_outcomes` (D-052): כל תיק עם פקודה תלויה-לא-ממומשת מקבל `invalidated`/`blocked_news` בשורה שלו + ביטול הפקודה בפועל.
 - **AT-3.6 H1:** R לפני 08:30 או Inversion אחרי 10:30 → אין כניסה (`expired`), גם אם השאר תקין.
 - **AT-3.7 Race 09:00:** Fixture עם סגירת 1M+5M+4H סימולטנית → עיבוד דו-שלבי; החלטה על מצב מעודכן; דטרמיניסטי בריצות חוזרות.
 - **AT-3.8 no_ifvg:** רצף מלא בלי אף FVG דובי 1M → `no_ifvg` ביומן.
 - **AT-3.9 Blackout cancel:** Limit תלוי בתחילת Blackout → מבוטל `blocked_news`.
 - **AT-3.10 [ידני] אימות 20 עסקאות:** דפי Viz מול היומן מול הגרף — המשתמש מאשר שהלוגיקה = הכוונה. **שער חובה.**
+- **AT-3.11 Per-arm quota admission (D-052):** Setup מגיע ל-ARMED; תיק A במכסה מלאה (2 מילויים היום), תיק B פנוי → `setup_arm_outcomes` מראה `blocked_quota` לתיק A ו-`pending`/המשך רגיל לתיק B, על אותה שורת `setups` בדיוק (`setups.outcome` נשאר `armed`, לא מושפע). מוודא ששני התיקים עצמאיים לחלוטין — אין דליפת חסימה בין תיקים.
 
 ## Phase 4
 - **AT-4.1 Paired entries:** בתוך מודל כניסה — timestamp ומחיר כניסה זהים לשלוש זרועות SL, לכל Setup.

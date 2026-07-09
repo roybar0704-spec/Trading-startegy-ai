@@ -61,6 +61,7 @@ Neutral → אין עסקאות. אין עסקה נגד Bias. היפוך Bias ת
 - Sizing: 0.5% מהיתרה **הממומשת** בזמן הפקודה. Dynamic Sizing — כבוי (FE).
 - מכסה: 2 **מילויים** ליום NY, לכל תיק בנפרד; פקודה לא ממולאת נרשמת ולא נספרת; כל הפקודות התלויות מתבטלות ב-10:30.
 - Setups חמושים במקביל ≤ המכסה שנותרה; עדיפות לפי §4. כניסה חוזרת לאותו אזור אחרי סטופ — מותרת (+תג `same_zone_reentry`).
+- **הבהרה — אכיפת מכסה היא פר-תיק, לא פר-Setup (אושרה במפורש ע"י המשתמש; ר' DECISIONS_LOG D-052):** מאחר שהמכסה מוגדרת "לכל תיק בנפרד", הבדיקה "Setups חמושים במקביל ≤ המכסה שנותרה" מתבצעת **בנפרד לכל אחד מ-9 התיקים** ברגע שה-Setup מגיע ל-ARMED — לא כבדיקה גלובלית יחידה על ה-Setup. תיק אחד עשוי להיחסם (`blocked_quota`) עבור Setup נתון בעוד תיק אחר (עם מכסה פנויה) ממשיך בו כרגיל. זו הבהרת-אכיפה בלבד (Journal/Data-Model), **אינה** משנה את חוק המכסה עצמו (2 מילויים/יום/תיק, ללא שינוי).
 
 ## 11. חדשות והחזקה
 - Blackout: ‎±30 דק' סביב חדשות אדומות USD; אין Setups חדשים ואין פקודות חדשות; פקודות תלויות מתבטלות בתחילת Blackout (`blocked_news`); פוזיציה פתוחה ממשיכה (תג `news_cross`).
@@ -81,6 +82,8 @@ Neutral → אין עסקאות. אין עסקה נגד Bias. היפוך Bias ת
 SCANNING → ZONE_ENGAGED → REACTION_SEEN → SWEEP_CONFIRMED → AWAITING_IFVG → ARMED → PENDING_ENTRY/WAIT_REJECTION → IN_TRADE → CLOSED.
 גארדים גלובליים: Bias-flip / Mitigation-100% / Session-close / Blackout / Quota.
 מצבים סופיים: `closed · expired · invalidated · blocked_news · blocked_quota · no_ifvg · invalid_geometry`. כל מעבר מתועד עם timestamp וסיבה. הדיאגרמה המלאה: `trigger_spec_state_machine_v1_1.md` §3.
+
+**הבהרה — שני מפלסי תוצאה (אושרה במפורש ע"י המשתמש; ר' DECISIONS_LOG D-052, Journal/Data-Model בלבד, אינה משנה את ה-State Machine עצמה):** מתוך שבעת המצבים הסופיים, `armed · expired · invalidated · no_ifvg` הם **model-agnostic** — זהים וחלים על ה-Setup כולו, בלתי-תלויים בתיק (הם תוצאה של מנגנון ה-FVG/R/S/iFVG, המשותף ל-9 התיקים). לעומתם `closed · blocked_news · blocked_quota · invalid_geometry` הם **תלויי-תיק במהותם** (Sizing/Quota/גאומטריה נבדקים פר-תיק; RiskEngine.approve כבר מחזיר Rejection פר-תיק מ-Phase 2) — אין להם משמעות כתוצאה יחידה של Setup שלם. `Setup.outcome`/`setups.outcome` (Journal) מכיל **אך ורק** את ארבעת הערכים ה-model-agnostic; התוצאה התלויה-בתיק נשמרת בנפרד, פר-`(setup_id, portfolio_id)`.
 
 ## 15. Scoring & AI (v1)
 Scoring: Log-Only; רכיבים — רמת FVG, TS, איכות Sweep, טריות Bias; שימוש יחיד — שובר שוויון בין Setups. AI: Analyst בלבד (ניתוח טרום-סשן, תיוג, Insights); אפס השפעה על החלטות.

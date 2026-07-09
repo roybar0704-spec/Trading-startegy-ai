@@ -65,6 +65,10 @@ CREATE TABLE fvg_registry (
     invalidated_at TIMESTAMPTZ
 );
 
+-- Setup = ישות מחקרית model-agnostic בלבד (D-052). outcome מכיל אך ורק את ארבעת
+-- הערכים שאינם תלויי-תיק (הזהים ל-9 התיקים) -- ר' SPEC_V1_FROZEN.md §14.
+-- תוצאה תלויית-תיק (closed/blocked_news/blocked_quota/invalid_geometry) חייבת
+-- להישמר ב-setup_arm_outcomes בלבד; לעולם לא כאן.
 CREATE TABLE setups (
     setup_id      TEXT PRIMARY KEY,
     run_id        TEXT NOT NULL,
@@ -78,10 +82,9 @@ CREATE TABLE setups (
     same_zone_reentry BOOLEAN NOT NULL DEFAULT FALSE,
     score         DOUBLE,
     outcome       TEXT NOT NULL CHECK (outcome IN
-                    ('armed','closed','expired','invalidated',
-                     'blocked_news','blocked_quota','no_ifvg','invalid_geometry')),
+                    ('armed','expired','invalidated','no_ifvg')),
     outcome_reason TEXT,
-    state_log     JSON NOT NULL             -- [{state,ts,reason}] — כל מעבר
+    state_log     JSON NOT NULL             -- [{state,ts,reason}] — מעברי ה-FSM המשותפים בלבד
 );
 
 CREATE TABLE orders (
@@ -100,6 +103,23 @@ CREATE TABLE orders (
     filled_at     TIMESTAMPTZ,
     fill_price    DOUBLE,
     cancel_reason TEXT
+);
+
+-- תוצאה פר-(Setup, תיק) -- D-052. שורה נוצרת עבור כל אחד מ-9 התיקים ברגע
+-- שה-Setup המקביל מגיע ל-ARMED (outcome='pending' כברירת מחדל), ומתעדכנת
+-- ל-ערך סופי כשהתיק הזה מגיע לתוצאה משלו. תיק אחד יכול לקבל blocked_quota בעוד
+-- תיק אחר על אותו Setup בדיוק ממשיך רגיל -- זו בדיוק הנקודה: 9 התיקים עצמאיים
+-- לחלוטין, גם כשה-Setup הבסיסי (FVG/R/S/iFVG) זהה.
+CREATE TABLE setup_arm_outcomes (
+    setup_id      TEXT NOT NULL REFERENCES setups(setup_id),
+    portfolio_id  TEXT NOT NULL REFERENCES portfolios(portfolio_id),
+    outcome       TEXT NOT NULL CHECK (outcome IN
+                    ('pending','closed','expired','invalidated',
+                     'blocked_news','blocked_quota','invalid_geometry')),
+    outcome_reason TEXT,
+    order_id      TEXT REFERENCES orders(order_id),   -- NULL אם נדחה לפני שנוצרה פקודה בכלל (RiskEngine Rejection)
+    state_log     JSON NOT NULL,            -- [{state,ts,reason}] -- מעברי התיק הזה בלבד, מ-ARMED ואילך
+    PRIMARY KEY (setup_id, portfolio_id)
 );
 
 CREATE TABLE trades (

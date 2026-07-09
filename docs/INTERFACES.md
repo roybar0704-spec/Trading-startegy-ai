@@ -29,9 +29,21 @@ class FVG:   id: str; tf: TF; direction: Literal["bull","bear"]
 class Setup: id: str; direction: Literal["long","short"]; fvg_id: str
              state: SetupState; r_bar: Bar | None; s_bar: Bar | None
              ifvg: FVG | None; ts_flag: bool; score: float | None
-             outcome: Outcome | None      # closed/expired/invalidated/
-                                          # blocked_news/blocked_quota/
-                                          # no_ifvg/invalid_geometry
+             outcome: Outcome | None      # armed/expired/invalidated/no_ifvg ONLY
+                                          # (D-052: model-agnostic, identical across
+                                          # all 9 portfolios). Portfolio-dependent
+                                          # results (closed/blocked_news/blocked_quota/
+                                          # invalid_geometry) are NEVER stored here --
+                                          # see SetupArmOutcome below.
+
+@dataclass
+class SetupArmOutcome:                   # D-052: one row per (setup, portfolio)
+    setup_id: str; portfolio_id: PortfolioId
+    outcome: Literal["pending","closed","expired","invalidated",
+                      "blocked_news","blocked_quota","invalid_geometry"]
+    outcome_reason: str | None
+    order_id: str | None                 # None if rejected before an Order existed
+                                          # (RiskEngine Rejection, e.g. invalid_geometry)
 
 @dataclass(frozen=True)
 class OrderIntent: setup_id: str; arm: ArmId; side: Side
