@@ -1,0 +1,15 @@
+{
+  "measured_at": "2026-07-09T05:45:32.125473+00:00",
+  "risk_engine": {
+    "intents": 50000,
+    "seconds": 0.2249,
+    "per_second": 222338.9
+  },
+  "fill_simulator": {
+    "ticks": 50000,
+    "seconds": 0.8009,
+    "per_second": 62426.9
+  },
+  "peak_rss_mb": 37.3,
+  "note": "No pre-declared Phase 2 budget in QUALITY_GATES.md; establishes D-032's initial measurement."
+}

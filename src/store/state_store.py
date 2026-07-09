@@ -27,6 +27,7 @@ from datetime import datetime
 from typing import Literal
 
 from src.core.types import FVG, TF, Swing
+from src.data.spread_report import SpreadReport
 
 BiasState = Literal["bullish", "bearish", "neutral"]
 
@@ -51,12 +52,13 @@ def _fvg_effective_ts(fvg: FVG) -> datetime:
 class StateStore:
     """Write side for structure/fvg engines; read side is only via ``as_of``."""
 
-    def __init__(self) -> None:
-        """Create an empty store."""
+    def __init__(self, spread_report: SpreadReport | None = None) -> None:
+        """Create an empty store. ``spread_report`` backs ``median_spread`` (D-039)."""
         self._swing_versions: dict[str, list[Swing]] = {}
         self._fvg_versions: dict[str, list[FVG]] = {}
         self._bias_events: list[BiasEvent] = []
         self._bos_by_tf: dict[TF, dict[datetime, str]] = defaultdict(dict)
+        self._spread_report = spread_report
 
     def put(self, obj: Swing | FVG | BiasEvent) -> None:
         """Append a new version of a Swing/FVG, or record a BiasEvent."""
@@ -124,6 +126,15 @@ class StateStore:
         """Full, chronological history of Bias *transitions* recorded so far."""
         return list(self._bias_events)
 
+    def median_spread(self, hour_et: int) -> float:
+        """Median spread (USD) for an ET hour, from the SpreadReport wired into this store."""
+        if self._spread_report is None:
+            raise NotImplementedError(
+                "No SpreadReport wired into this StateStore (D-039); construct it with "
+                "StateStore(spread_report=...) to use median_spread()/min_stop geometry checks."
+            )
+        return self._spread_report.median_spread(hour_et)
+
 
 class MarketContext:
     """Read-only, point-in-time view of a StateStore. Valid only for the tick it was built for."""
@@ -168,5 +179,5 @@ class MarketContext:
         raise NotImplementedError("Calendar Engine not built until Phase 3 T3.1 (D-039)")
 
     def median_spread(self, hour_et: int) -> float:
-        """Median spread for an ET hour. Not wired to spread_report until Phase 2 (D-039)."""
-        raise NotImplementedError("Cost Model wiring not built until Phase 2 (D-039)")
+        """Median spread (USD) for an ET hour, from the SpreadReport wired into the store."""
+        return self._store.median_spread(hour_et)
