@@ -77,6 +77,14 @@ class FillSimulator:
         order.status = "cancelled"
         order.cancel_reason = reason
 
+    def get_order(self, order_id: str) -> Order:
+        """The tracked Order (entry price/units/side/status) -- for Fill-driven P&L (T3.3)."""
+        return self._orders[order_id]
+
+    def orders(self) -> list[Order]:
+        """Every Order ever placed with this simulator, any status."""
+        return list(self._orders.values())
+
     def on_tick(self, tick: Tick) -> list[Fill]:
         """Check every pending entry and every open exit against one real tick."""
         fills = self._resolve_pending(tick)
