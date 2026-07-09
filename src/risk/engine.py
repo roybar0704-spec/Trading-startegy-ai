@@ -49,6 +49,12 @@ class RiskEngine:
                 f"D-045); got None for setup_id={intent.setup_id!r} -- this is an "
                 f"EntryModel contract violation, not a legitimate rejection."
             )
+        if intent.side not in ("long", "short"):
+            raise ValueError(
+                f"OrderIntent.side must be 'long' or 'short'; got {intent.side!r} for "
+                f"setup_id={intent.setup_id!r} -- this is a module-boundary contract "
+                f"violation from whatever produced this OrderIntent."
+            )
 
         stop_distance = (
             intent.price - intent.sl if intent.side == "long" else intent.sl - intent.price
