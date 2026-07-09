@@ -114,6 +114,7 @@ class SetupStream:
     def __init__(self) -> None:
         """Create an empty stream; no Setups tracked yet."""
         self._active: dict[str, _Candidate] = {}
+        self._finished: dict[str, Setup] = {}
         self._engaged_fvg_ids: set[str] = set()
         self._ever_engaged_fvg_ids: set[str] = set()
         self._pending: list[SetupEvent] = []
@@ -128,14 +129,29 @@ class SetupStream:
 
     def step(self, ctx: MarketContext) -> list[SetupEvent]:
         """Evaluate ctx-dependent guards, then drain and return this tick's events."""
+        self._finished.clear()  # last tick's callers have had their chance at get_setup()
         for candidate in list(self._active.values()):
             if candidate.dead:
                 continue
             self._check_guards(candidate, ctx)
         drained, self._pending = self._pending, []
         for setup_id in [sid for sid, c in self._active.items() if c.dead]:
-            del self._active[setup_id]
+            self._finished[setup_id] = self._active.pop(setup_id).setup
         return drained
+
+    def get_setup(self, setup_id: str) -> Setup:
+        """The full Setup record (r_bar/s_bar/ifvg included).
+
+        Valid for active Setups, and for ones that just went terminal during the most
+        recent ``step()`` call.
+        """
+        if setup_id in self._active:
+            return self._active[setup_id].setup
+        return self._finished[setup_id]
+
+    def active_setups(self) -> list[Setup]:
+        """Every Setup still being tracked (any non-terminal or ARMED state), unordered."""
+        return [c.setup for c in self._active.values()]
 
     # ---- Stage 1: bar-close bookkeeping -----------------------------------
 
@@ -235,7 +251,7 @@ class SetupStream:
             self._pending.append(
                 SetupEvent(
                     kind="armed", setup_id=candidate.setup.id, ts=bar.close_ts,
-                    ifvg=candidate.setup.ifvg,
+                    ifvg=candidate.setup.ifvg, inversion_close=bar.c,
                 )
             )
 

@@ -1,9 +1,10 @@
 """AT-3.5 Invalidations: Re-Inversion / S.low break / Mitigation-100% / Bias-flip ->
 correct final state + (D-052) correct cascade to per-arm cleanup signal (post_arm flag).
 
-Note: ``step()`` drops a candidate from ``stream._active`` the moment it dies (freeing
-its fvg_id for same_zone_reentry), so tests grab the ``Setup`` reference *before* the
-invalidating step and inspect that object afterward -- it isn't destroyed, just unlinked.
+Note: ``step()`` drops a Setup from active tracking the moment it dies (freeing its
+fvg_id for same_zone_reentry), so tests grab the ``Setup`` reference (via
+``active_setups()``) *before* the invalidating step and inspect that object afterward --
+it isn't destroyed, just unlinked.
 """
 
 from datetime import timedelta
@@ -26,9 +27,9 @@ def _sweep_confirmed_stream():
     s_ts = IN_WINDOW + timedelta(minutes=10)
     stream.on_bar_close(m5(s_ts, 98.0, 98.5, 96.0, 97.5), store)  # S, low=96
     stream.step(store.as_of(s_ts + timedelta(minutes=1)))
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "AWAITING_IFVG"
-    return store, stream, candidate.setup
+    [setup] = stream.active_setups()
+    assert setup.state == "AWAITING_IFVG"
+    return store, stream, setup
 
 
 def _armed_stream():

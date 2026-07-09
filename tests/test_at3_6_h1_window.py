@@ -21,7 +21,7 @@ def test_engagement_and_r_before_window_still_progresses_but_expires_without_ent
     assert any(e.kind == "engaged" for e in events)
     # in_window() is False this early -- the very next step() must expire it immediately,
     # since it never reaches ARMED and isn't specifically AWAITING_IFVG either.
-    assert any(e.kind == "expired" for e in events) or not stream._active
+    assert any(e.kind == "expired" for e in events) or not stream.active_setups()
 
 
 def test_inversion_after_window_close_never_arms():

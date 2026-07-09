@@ -31,9 +31,9 @@ def test_later_qualifying_r_replaces_earlier_one():
     stream.on_bar_close(m5(ts2, 99.2, 99.6, 97.5, 99.4), store)
     stream.step(store.as_of(ts2 + timedelta(minutes=1)))
 
-    [candidate] = stream._active.values()
-    assert candidate.setup.r_bar.l == 97.5  # replaced, not the original 97.0
-    assert candidate.setup.state == "REACTION_SEEN"
+    [setup] = stream.active_setups()
+    assert setup.r_bar.l == 97.5  # replaced, not the original 97.0
+    assert setup.state == "REACTION_SEEN"
 
 
 def test_close_through_below_r_low_resets_to_zone_engaged():
@@ -47,6 +47,6 @@ def test_close_through_below_r_low_resets_to_zone_engaged():
     stream.on_bar_close(m5(ts2, 97.5, 97.6, 96.0, 96.5), store)
     stream.step(store.as_of(ts2 + timedelta(minutes=1)))
 
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "ZONE_ENGAGED"
-    assert candidate.setup.r_bar is None
+    [setup] = stream.active_setups()
+    assert setup.state == "ZONE_ENGAGED"
+    assert setup.r_bar is None

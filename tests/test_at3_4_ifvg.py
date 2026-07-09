@@ -20,8 +20,8 @@ def _awaiting_ifvg_stream(s_close_ts):
     stream.step(store.as_of(r_ts + timedelta(minutes=1)))
     stream.on_bar_close(m5(s_close_ts, 98.0, 98.5, 96.0, 97.5), store)  # S
     stream.step(store.as_of(s_close_ts + timedelta(minutes=1)))
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "AWAITING_IFVG"
+    [setup] = stream.active_setups()
+    assert setup.state == "AWAITING_IFVG"
     return store, stream
 
 
@@ -37,8 +37,8 @@ def test_wick_through_top_does_not_invert():
     stream.on_bar_close(m1(wick_ts, 96.5, 97.4, 96.4, 96.8), store)
     events = stream.step(store.as_of(wick_ts + timedelta(minutes=1)))
     assert not any(e.kind == "armed" for e in events)
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "AWAITING_IFVG"
+    [setup] = stream.active_setups()
+    assert setup.state == "AWAITING_IFVG"
 
 
 def test_inversion_before_s_close_is_not_counted():
@@ -63,8 +63,8 @@ def test_inversion_before_s_close_is_not_counted():
     events = stream.step(store.as_of(s_ts + timedelta(minutes=1)))
     assert not any(e.kind == "armed" for e in events)  # that gap was already used up
 
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "AWAITING_IFVG"  # never armed
+    [setup] = stream.active_setups()
+    assert setup.state == "AWAITING_IFVG"  # never armed
 
 
 def test_first_inversion_after_s_close_arms():
@@ -77,10 +77,10 @@ def test_first_inversion_after_s_close_arms():
     stream.on_bar_close(m1(inv_ts, 96.8, 97.3, 96.7, 97.2), store)
     events = stream.step(store.as_of(inv_ts + timedelta(minutes=1)))
     assert any(e.kind == "armed" for e in events)
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "ARMED"
-    assert candidate.setup.ifvg.top == 97.0
-    assert candidate.setup.ifvg.bottom == 96.5
+    [setup] = stream.active_setups()
+    assert setup.state == "ARMED"
+    assert setup.ifvg.top == 97.0
+    assert setup.ifvg.bottom == 96.5
 
 
 def test_multi_gap_inversion_same_bar_picks_highest_top():
@@ -100,5 +100,5 @@ def test_multi_gap_inversion_same_bar_picks_highest_top():
     stream.on_bar_close(m1(inv_ts, 96.8, 97.5, 96.7, 97.3), store)
     events = stream.step(store.as_of(inv_ts + timedelta(minutes=1)))
     assert any(e.kind == "armed" for e in events)
-    [candidate] = stream._active.values()
-    assert candidate.setup.ifvg.top == 97.0
+    [setup] = stream.active_setups()
+    assert setup.ifvg.top == 97.0

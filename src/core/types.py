@@ -226,3 +226,4 @@ class SetupEvent:
     reason: str | None = None
     ifvg: IFVG | None = None
     post_arm: bool = False  # True: setups.outcome already 'armed' -- cancel pending orders only
+    inversion_close: float | None = None  # "armed" only: the Inversion candle's close (M2/M4)

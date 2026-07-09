@@ -25,8 +25,8 @@ def test_undercut_without_close_back_above_is_not_a_sweep():
     # low(96) < R.low(97), but close(96.5) also < 97 -- this is Close-Through, not Sweep.
     stream.on_bar_close(m5(ts, 97.2, 97.3, 96.0, 96.5), store)
     stream.step(store.as_of(ts + timedelta(minutes=1)))
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "ZONE_ENGAGED"  # reset, not SWEEP_CONFIRMED
+    [setup] = stream.active_setups()
+    assert setup.state == "ZONE_ENGAGED"  # reset, not SWEEP_CONFIRMED
 
 
 def test_undercut_with_close_back_above_confirms_sweep():
@@ -36,6 +36,6 @@ def test_undercut_with_close_back_above_confirms_sweep():
     stream.on_bar_close(m5(ts, 98.0, 98.5, 96.0, 97.5), store)
     events = stream.step(store.as_of(ts + timedelta(minutes=1)))
     assert any(e.kind == "sweep_confirmed" for e in events)
-    [candidate] = stream._active.values()
-    assert candidate.setup.state == "AWAITING_IFVG"
-    assert candidate.setup.s_bar.l == 96.0
+    [setup] = stream.active_setups()
+    assert setup.state == "AWAITING_IFVG"
+    assert setup.s_bar.l == 96.0
