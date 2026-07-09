@@ -158,9 +158,11 @@ class SetupStream:
     def _on_1m_close(self, bar: Bar, store: StateStore) -> None:
         ctx_now = store.as_of(bar.close_ts)
         bias = ctx_now.bias()
-        if bias != "neutral":
+        if bias != "neutral" and not ctx_now.in_blackout():
             # Engagement is allowed before the window opens (SPEC S6 H1) -- unlike
-            # R/S/Inversion below, no in_window() gate here.
+            # R/S/Inversion below, no in_window() gate here. Blackout does block new
+            # Setups outright (SPEC S11: "no new Setups"), unlike window which only
+            # restricts R/S/Inversion.
             direction: Side = "long" if bias == "bullish" else "short"
             fvg_direction = "bull" if direction == "long" else "bear"
             for fvg in ctx_now.active_fvgs(TF.H4, fvg_direction):

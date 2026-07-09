@@ -6,17 +6,24 @@ queries the resulting state, never how it got there), plus a SessionEngine.
 from datetime import UTC, datetime, timedelta
 
 from src.core.types import FVG, TF, Bar, Side
+from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 from src.store.state_store import BiasEvent, StateStore
 
 SESSION = SessionEngine.from_config(window=("08:30", "10:30"), tz="America/New_York")
+NO_BLACKOUT = CalendarEngine.from_config(
+    [], currencies=("USD",), impacts=("red",), blackout_before_min=30, blackout_after_min=30,
+)
 SEED_TS = datetime(2024, 1, 10, 12, 0, tzinfo=UTC)  # well before any window used in tests
 IN_WINDOW = datetime(2024, 1, 10, 14, 0, tzinfo=UTC)  # 09:00 ET, winter (EST, UTC-5)
 
 
-def seed_store(direction: Side, top: float, bottom: float, fvg_id: str = "FVG-H4-1") -> StateStore:
+def seed_store(
+    direction: Side, top: float, bottom: float, fvg_id: str = "FVG-H4-1",
+    calendar: CalendarEngine = NO_BLACKOUT,
+) -> StateStore:
     """A store with one confirmed, unmitigated 4H FVG and matching Bias, both from SEED_TS."""
-    store = StateStore(session_engine=SESSION)
+    store = StateStore(session_engine=SESSION, calendar_engine=calendar)
     store.put(
         FVG(
             id=fvg_id,
