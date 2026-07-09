@@ -50,3 +50,17 @@ def test_inversion_after_window_close_never_arms():
     stream.on_bar_close(m1(late_ts, 96.8, 97.3, 96.7, 97.2), store)
     late_events = stream.step(store.as_of(late_ts + timedelta(minutes=1)))
     assert not any(e.kind == "armed" for e in late_events)
+
+
+def test_r_candle_closing_before_window_open_is_rejected():
+    # A 5M bar that would fully qualify as R, but closes before 08:30 ET -- must not be
+    # accepted (SPEC S6 H1: "R's close, S's close, and the entry -- all inside the window").
+    store = seed_store("long", TOP, BOTTOM)
+    stream = SetupStream()
+    stream.on_bar_close(m1(BEFORE_WINDOW, 100.5, 100.6, 99.5, 100.2), store)
+    stream.step(store.as_of(BEFORE_WINDOW + timedelta(minutes=1)))
+
+    r_ts = BEFORE_WINDOW + timedelta(minutes=5)  # still well before 08:30 ET
+    stream.on_bar_close(m5(r_ts, 99.0, 99.8, 97.0, 99.5), store)  # otherwise a valid R
+    events = stream.step(store.as_of(r_ts + timedelta(minutes=1)))
+    assert not any(e.kind == "reaction_seen" for e in events)

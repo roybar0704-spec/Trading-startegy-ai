@@ -123,7 +123,7 @@ class SetupStream:
     def on_bar_close(self, bar: Bar, store: StateStore) -> None:
         """Feed one closed bar (1M or 5M); mutates internal state, buffers any events."""
         if bar.tf == TF.M5:
-            self._on_5m_close(bar)
+            self._on_5m_close(bar, store)
         elif bar.tf == TF.M1:
             self._on_1m_close(bar, store)
 
@@ -159,6 +159,8 @@ class SetupStream:
         ctx_now = store.as_of(bar.close_ts)
         bias = ctx_now.bias()
         if bias != "neutral":
+            # Engagement is allowed before the window opens (SPEC S6 H1) -- unlike
+            # R/S/Inversion below, no in_window() gate here.
             direction: Side = "long" if bias == "bullish" else "short"
             fvg_direction = "bull" if direction == "long" else "bear"
             for fvg in ctx_now.active_fvgs(TF.H4, fvg_direction):
@@ -168,6 +170,7 @@ class SetupStream:
                 if touched:
                     self._engage(fvg, direction, bar.close_ts)
 
+        in_window = ctx_now.in_window()
         for candidate in self._active.values():
             if candidate.dead:
                 continue
@@ -175,7 +178,7 @@ class SetupStream:
                 self._report_s_low_break(candidate, bar.close_ts)
                 continue
             if candidate.setup.state in _ACTIVE_STATES:
-                self._track_ifvg_candidates(candidate, bar)
+                self._track_ifvg_candidates(candidate, bar, in_window)
             elif candidate.setup.state == "ARMED":
                 self._check_post_arm_reinversion(candidate, bar)
 
@@ -217,7 +220,7 @@ class SetupStream:
         self._ever_engaged_fvg_ids.add(fvg.id)
         self._pending.append(SetupEvent(kind="engaged", setup_id=setup_id, ts=ts))
 
-    def _track_ifvg_candidates(self, candidate: _Candidate, bar: Bar) -> None:
+    def _track_ifvg_candidates(self, candidate: _Candidate, bar: Bar, in_window: bool) -> None:
         window = candidate.window.push(bar)
         if len(window) == 3:
             c1, _c2, c3 = window
@@ -236,7 +239,9 @@ class SetupStream:
                 cand.inverted_at = bar.close_ts
                 just_inverted.append(cand)
 
-        if candidate.setup.state == "AWAITING_IFVG" and just_inverted:
+        # Inversion (the entry itself) must land inside the window (SPEC S6 H1) --
+        # candidates keep forming/inverting-tracking regardless, only arming is gated.
+        if candidate.setup.state == "AWAITING_IFVG" and just_inverted and in_window:
             chosen = (
                 max(just_inverted, key=lambda c: c.top)
                 if candidate.setup.direction == "long"
@@ -277,17 +282,23 @@ class SetupStream:
             candidate.dead = True
             self._engaged_fvg_ids.discard(candidate.setup.fvg_id)
 
-    def _on_5m_close(self, bar: Bar) -> None:
+    def _on_5m_close(self, bar: Bar, store: StateStore) -> None:
+        in_window = store.as_of(bar.close_ts).in_window()
         for candidate in self._active.values():
             setup = candidate.setup
             if candidate.dead or setup.state not in ("ZONE_ENGAGED", "REACTION_SEEN"):
                 continue
-            self._track_r_and_s(candidate, bar)
+            self._track_r_and_s(candidate, bar, in_window)
 
-    def _track_r_and_s(self, candidate: _Candidate, bar: Bar) -> None:
+    def _track_r_and_s(self, candidate: _Candidate, bar: Bar, in_window: bool) -> None:
+        """R's close and S's close must both land inside the window (SPEC S6 H1).
+
+        The Close-Through reset back to ZONE_ENGAGED is a rejection, not a new
+        formation, so it isn't gated the same way.
+        """
         setup = candidate.setup
 
-        if setup.state == "REACTION_SEEN" and setup.r_bar is not None:
+        if in_window and setup.state == "REACTION_SEEN" and setup.r_bar is not None:
             if _qualifies_as_s(bar, setup.r_bar, setup.direction):
                 setup.s_bar = bar
                 setup.state = "SWEEP_CONFIRMED"
@@ -297,7 +308,7 @@ class SetupStream:
                 setup.state = "AWAITING_IFVG"
                 return
 
-        if _qualifies_as_r(bar, candidate.fvg, setup.direction):
+        if in_window and _qualifies_as_r(bar, candidate.fvg, setup.direction):
             setup.r_bar = bar
             if setup.state != "REACTION_SEEN":
                 setup.state = "REACTION_SEEN"
