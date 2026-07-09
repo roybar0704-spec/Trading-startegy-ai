@@ -53,6 +53,7 @@ Neutral → אין עסקאות. אין עסקה נגד Bias. היפוך Bias ת
 - R_body = `min(R.open,R.close) − buffer` | S_body = `min(S.open,S.close) − buffer` | S_wick = `S.low − buffer`.
 - Buffer: פרמטר מוצהר. `min_stop_distance = k × median_spread(hour)`.
 - **גאומטריה:** `entry − SL ≥ min_stop_distance`, אחרת `invalid_geometry`. `entry` = **Reference Entry Price** (`OrderIntent.price`, ר' §8) — RiskEngine בודק גאומטריה מול הערך הזה בלבד, לעולם לא מול מחיר ביצוע בפועל.
+- **הבהרה — `median_spread(hour)` חייב להיות Point-in-Time (אושרה במפורש ע"י המשתמש; ר' DECISIONS_LOG D-049):** `median_spread(hour_et)` הנצרך כאן חייב להיגזר **אך ורק** מנתונים שהיו זמינים עד רגע ה-`now` הנוכחי בבקטסט (Rolling/Expanding SpreadReport) — לעולם לא מ-SpreadReport שנבנה על טווח הכולל נתונים עתידיים ביחס לאותו רגע. זו ברירת המחדל היחידה של v1; SpreadReport מסוג אחר (למשל אגרגט על פני כל התקופה) הוא זרוע-מחקר נפרדת בלבד ואינו רשאי לשנות את התנהגות v1.
 - Grid מלא: {M1,M2,M4} × {R_body,S_body,S_wick} = 9 תיקים מבודדים על Setup Stream זהה; בתוך מודל כניסה — כניסה זהה לשלוש זרועות ה-SL. ההכרעה — בנתונים (Paired), ואז ננעל כחוק v1.2.
 
 ## 10. TP / Sizing / מכסה
