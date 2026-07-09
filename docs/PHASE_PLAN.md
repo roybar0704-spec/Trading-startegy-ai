@@ -24,11 +24,12 @@
 **Gate:** AT-1.*; Prefix-Consistency ירוק על Fixture דו-שבועי; אין בקוד שום ענף/תנאי שמבחין בין מקור נתונים סינתטי לאמיתי.
 
 ## Phase 2 — Execution Layer
-- T2.1 Cost Model: ספרד מהדאטה, Slippage-Stop (×3 בחדשות), Delay, Commission.
-- T2.2 Fill Simulator: Limit (Ask≤P), Market, SL/TP על Ticks, SL-First fallback, Gap-Through.
+- T2.1 Cost Model: ספרד מהדאטה, Slippage-Stop (×3 בחדשות), Delay (D-050), Commission.
+- T2.2 Fill Simulator: Limit (Ask≤P), Market, SL/TP על Ticks, SL-First fallback, Gap-Through, Execution Delay.
 - T2.3 Risk Engine: Sizing ממומש 0.5%, min_stop, גאומטריה, מכסה פר-תיק.
 - T2.4 Portfolio isolation (הון/מכסה/Equity לכל זרוע).
-**Gate:** AT-2.*; תרחישי מילוי ידניים תואמים חישוב יד.
+
+**Gate: Green-Conditional (סגור, 2026-07-09, באישור משתמש, בדפוס D-036):** AT-2.1–AT-2.8 ירוקות (48/48 בבדיקה מלאה כולל Phase 0–1); כל שאר חמשת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase2.py`) רץ מקצה-לקצה. **התנאי:** KI-001 ו-KI-007 (שניהם `high`) נשארים פתוחים אך **אינם חוסמים** את סגירת Phase 2 עצמה — הם הופכים לחוסמים מחייבים לפני T3.4 (Research Readiness Review, D-037). KI-006 ו-KI-007 נקבעו כחלק מחייב מעיצוב ה-Orchestrator הראשוני (T3.3), לא כ-Refactor מאוחר.
 
 ## Phase 3 — End-to-End צר (M2 × S_body בלבד)
 - T3.1 Session+Calendar Engines: חלון, Blackout, ביטולים, effective_window, day_roll.
