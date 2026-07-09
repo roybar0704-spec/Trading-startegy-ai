@@ -75,10 +75,10 @@ source_modules = ["src.core"]
 forbidden_modules = ["src.config", "src.data"]
 
 [[tool.importlinter.contracts]]
-name = "Engine layering (Phase 3: {data, session} <- store <- displacement <- {structure, fvg} <- {risk, execution})"
+name = "Engine layering (Phase 3: {data, session} <- store <- displacement <- {structure, fvg} <- {entry, risk, execution})"
 type = "layers"
 layers = [
-    "src.risk | src.execution",
+    "src.entry | src.risk | src.execution",
     "src.structure | src.fvg",
     "src.displacement",
     "src.store",

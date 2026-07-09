@@ -177,3 +177,52 @@ class SetupArmOutcome:
     ]
     outcome_reason: str | None = None
     order_id: str | None = None
+
+
+SetupState = Literal[
+    "ZONE_ENGAGED", "REACTION_SEEN", "SWEEP_CONFIRMED", "AWAITING_IFVG", "ARMED",
+]
+
+
+@dataclass
+class IFVG:
+    """A chosen (armed) iFVG: 1M gap that inverted (docs/trigger_spec S2)."""
+
+    top: float
+    bottom: float
+    formed_at: datetime
+    inversion_ts: datetime
+
+
+@dataclass
+class Setup:
+    """A model-agnostic Setup (D-052): one FVG x R x S x iFVG sequence, shared by all 9 arms."""
+
+    id: str
+    direction: Side
+    fvg_id: str
+    state: SetupState
+    engagement_ts: datetime
+    r_bar: Bar | None = None
+    s_bar: Bar | None = None
+    ifvg: IFVG | None = None
+    ts_flag: bool = False
+    same_zone_reentry: bool = False
+    score: float | None = None
+    outcome: Literal["armed", "expired", "invalidated", "no_ifvg"] | None = None
+    outcome_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class SetupEvent:
+    """One Setup Stream transition (docs/INTERFACES.md SetupStream)."""
+
+    kind: Literal[
+        "engaged", "reaction_seen", "sweep_confirmed", "armed",
+        "invalidated", "expired", "no_ifvg",
+    ]
+    setup_id: str
+    ts: datetime
+    reason: str | None = None
+    ifvg: IFVG | None = None
+    post_arm: bool = False  # True: setups.outcome already 'armed' -- cancel pending orders only
