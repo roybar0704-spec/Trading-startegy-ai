@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Phase 2 demo (docs/PHASE_PLAN.md working-software table).
 
-Fill-scenario report: Limit / Market / SL-First / Gap-Through / Sizing,
-each printed against its hand-calculated expected value.
+Fill-scenario report: Limit / Market / SL-First / Gap-Through /
+Execution Delay / Sizing, each printed against its hand-calculated
+expected value.
 
 Usage:
     python scripts/demo_phase2.py
@@ -11,7 +12,7 @@ Usage:
 from __future__ import annotations
 
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -115,6 +116,19 @@ def demo_gap_through() -> None:
     print(f"  fill price != SL price (1998.0)? {fills[0].price != order.sl}")
 
 
+def demo_execution_delay() -> None:
+    print("\n== Execution Delay (AT-2.8, D-050): trigger now, fill 250ms later ==")
+    sim = FillSimulator(COST_MODEL, in_news_checker=lambda ts: False, execution_delay_ms=250)
+    order = _order(otype="limit", side="buy", price=2000.0)
+    sim.place(order, "P1")
+    trigger_ts = datetime(2024, 1, 1, 1, tzinfo=UTC)
+    fills = sim.on_tick(Tick(ts=trigger_ts, bid=1999.7, ask=1999.9))
+    print(f"  condition met at t=0ms -> fills now? {len(fills) > 0} (expected: False)")
+    resolve_ts = trigger_ts + timedelta(milliseconds=250)
+    fills = sim.on_tick(Tick(ts=resolve_ts, bid=1999.6, ask=1999.8))
+    report_line("fill price at t=250ms (hand: 2000.0, anchored)", 2000.0, fills[0].price)
+
+
 def demo_sizing() -> None:
     print("\n== Sizing (AT-2.5): 0.5% of realized equity / stop distance, no rounding (RA-26) ==")
     units = size_units(equity=10_000, sizing_pct=0.005, stop_distance_usd=2.00)
@@ -149,6 +163,7 @@ def main() -> None:
     demo_market_fill()
     demo_sl_first_fallback()
     demo_gap_through()
+    demo_execution_delay()
     demo_sizing()
     print("\nPhase 2 demo complete.")
 
