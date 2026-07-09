@@ -15,13 +15,13 @@ from __future__ import annotations
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.backtest.orchestrator import Orchestrator
 from src.backtest.portfolio_arm import PortfolioArm
 from src.core.types import FVG, TF, ArmId, Bar, NewsEvent, Tick
-from src.data.spread_report import HourSpreadStats, SpreadReport
 from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.entry.m1 import M1EntryModel
 from src.entry.m2 import M2EntryModel
@@ -91,21 +91,27 @@ def _make_arm(entry: str, sl_anchor: str) -> PortfolioArm:
     return PortfolioArm(arm_id=arm_id, portfolio=portfolio, risk=risk, fill_sim=fill_sim)
 
 
+def _warmup_ticks() -> list[Tick]:
+    """Pre-run ticks (D-049): one per ET hour, strictly before SEED_TS, so
+    median_spread() has data before anything on the demo's own timeline."""
+    et = ZoneInfo("America/New_York")
+    return [
+        Tick(ts=datetime(2024, 1, 1, h, 0, tzinfo=et).astimezone(UTC), bid=2000.0, ask=2000.01)
+        for h in range(24)
+    ]
+
+
 def _make_orchestrator(bars_1m, bars_5m, ticks, arms) -> Orchestrator:
     entry_models = {
         "M1": M1EntryModel(session=SESSION, get_setup=None),
         "M2": M2EntryModel(get_setup=None),
         "M4": M4EntryModel(get_setup=None),
     }
-    spread_report = SpreadReport(
-        symbol="XAUUSD",
-        by_hour={h: HourSpreadStats(h, 100, 0.01, 0.01, 0.01, 0.01, 0.01) for h in range(24)},
-    )
     orch = Orchestrator(
         bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=[], ticks=ticks,
         session=SESSION, calendar=NO_BLACKOUT, arms=arms, entry_models=entry_models,
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
-        cost_model=COST_MODEL, sl_buffer_usd=0.05, spread_report=spread_report,
+        cost_model=COST_MODEL, sl_buffer_usd=0.05, spread_warmup_ticks=_warmup_ticks(),
     )
     for model in entry_models.values():
         model.get_setup = orch.setup_stream.get_setup

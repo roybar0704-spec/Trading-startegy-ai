@@ -1,10 +1,11 @@
 """T3.3 Orchestrator test scaffolding."""
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from src.backtest.orchestrator import Orchestrator
 from src.backtest.portfolio_arm import PortfolioArm
-from src.core.types import FVG, TF, ArmId
+from src.core.types import FVG, TF, ArmId, Tick
 from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.entry.m1 import M1EntryModel
 from src.entry.m2 import M2EntryModel
@@ -16,7 +17,6 @@ from src.risk.portfolio import Portfolio
 from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 from src.store.state_store import BiasEvent
-from tests.fixtures.spread import make_spread_report
 
 SESSION = SessionEngine.from_config(window=("08:30", "10:30"), tz="America/New_York")
 NO_BLACKOUT = CalendarEngine.from_config(
@@ -24,6 +24,20 @@ NO_BLACKOUT = CalendarEngine.from_config(
 )
 SEED_TS = datetime(2024, 1, 10, 12, 0, tzinfo=UTC)
 IN_WINDOW = datetime(2024, 1, 10, 14, 0, tzinfo=UTC)  # 09:00 ET, winter
+_ET = ZoneInfo("America/New_York")
+
+
+def warmup_ticks(spread_by_hour: dict[int, float]) -> list[Tick]:
+    """One synthetic pre-run Tick per ET hour (2024-01-01, strictly before SEED_TS) at a
+    fixed spread -- warm-starts ExpandingSpreadReport (D-049) so median_spread() has data
+    before any Tick appears on the test's own timeline. Legitimately prior data, not a
+    lookahead shortcut -- see ExpandingSpreadReport.warm_start.
+    """
+    ticks = []
+    for hour, spread in spread_by_hour.items():
+        ts_ny = datetime(2024, 1, 1, hour, 0, tzinfo=_ET)
+        ticks.append(Tick(ts=ts_ny.astimezone(UTC), bid=2000.0, ask=2000.0 + spread))
+    return ticks
 
 
 def cost_model() -> StaticCostModel:
@@ -68,7 +82,7 @@ def make_orchestrator(
         session=SESSION, calendar=calendar, arms=arms, entry_models=entry_models,
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
         cost_model=cost_model(), sl_buffer_usd=0.05,
-        spread_report=make_spread_report({h: 0.01 for h in range(24)}), journal=None,
+        spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}), journal=None,
     )
     # get_setup wasn't known until the Orchestrator built its own SetupStream -- wire it now.
     for model in entry_models.values():

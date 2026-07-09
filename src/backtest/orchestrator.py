@@ -31,7 +31,7 @@ from datetime import datetime
 
 from src.backtest.portfolio_arm import PortfolioArm
 from src.core.types import TF, Bar, Order, Rejection, SetupEvent, Tick
-from src.data.spread_report import SpreadReport
+from src.data.spread_report import ExpandingSpreadReport
 from src.displacement.model import DisplacementModel
 from src.entry.setup_stream import SetupStream
 from src.entry.sl_geometry import apply_sl_anchor
@@ -80,7 +80,11 @@ class Orchestrator:
     displacement_params: dict
     cost_model: StaticCostModel
     sl_buffer_usd: float
-    spread_report: SpreadReport | None = None  # backs ctx.median_spread() for RiskEngine geometry
+    symbol: str = "XAUUSD"
+    # Ticks strictly before this run's own timeline (e.g. the 90-day Warm-Up window,
+    # SPEC S2/RA-18) used only to warm-start median_spread so day-1 hours aren't empty.
+    # Never fed to FillSimulator/SetupStream -- see ExpandingSpreadReport.warm_start (D-049).
+    spread_warmup_ticks: list[Tick] = field(default_factory=list)
     journal: DuckDBJournal | None = None
     run_id: str = "run"
 
@@ -88,12 +92,16 @@ class Orchestrator:
     structure_4h: StructureEngine = field(init=False)
     fvg_4h: FVGEngine = field(init=False)
     setup_stream: SetupStream = field(init=False)
+    spread_tracker: ExpandingSpreadReport = field(init=False)
     _pending_by_setup: dict[str, list[tuple[PortfolioArm, str]]] = field(init=False)
 
     def __post_init__(self) -> None:
         """Wire the shared engines. One StateStore/SetupStream for the whole run."""
+        self.spread_tracker = ExpandingSpreadReport.warm_start(
+            symbol=self.symbol, ticks=self.spread_warmup_ticks
+        )
         self.store = StateStore(
-            spread_report=self.spread_report, session_engine=self.session,
+            spread_report=self.spread_tracker, session_engine=self.session,
             calendar_engine=self.calendar,
         )
         self.structure_4h = StructureEngine(TF.H4, is_bias_source=True)
@@ -173,6 +181,10 @@ class Orchestrator:
                     self._route_intent("M4", intent, ctx, result=None)
 
     def _apply_tick(self, tick: Tick) -> None:
+        # Grow the point-in-time spread tracker first (D-049): this tick's own spread
+        # must already be included by the time Stage 2 queries median_spread() for the
+        # same timestamp, and this ordering has no bearing on fill simulation below.
+        self.spread_tracker.update(tick)
         for arm in self.arms:
             for fill in arm.fill_sim.on_tick(tick):
                 self._on_fill(arm, fill)

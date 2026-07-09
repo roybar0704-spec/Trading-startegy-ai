@@ -21,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.backtest.orchestrator import Orchestrator
 from src.backtest.portfolio_arm import PortfolioArm
 from src.core.types import TF, ArmId, Bar
-from src.data.spread_report import HourSpreadStats, SpreadReport
 from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.entry.m1 import M1EntryModel
 from src.entry.m2 import M2EntryModel
@@ -83,19 +82,17 @@ def bench_orchestrator() -> tuple[float, int]:
         "M2": M2EntryModel(get_setup=None),
         "M4": M4EntryModel(get_setup=None),
     }
-    spread_report = SpreadReport(
-        symbol="XAUUSD",
-        by_hour={h: HourSpreadStats(h, 100, 0.2, 0.2, 0.2, 0.2, 0.2) for h in range(24)},
-    )
     cost_model = StaticCostModel(
         CostModelParams(slippage_stop_usd=0.10, news_slip_mult=3.0,
                          slippage_market_usd=0.05, commission_per_unit=0.0)
     )
+    # Quiet bars, no signals -- median_spread() is never queried, so no warm-up
+    # ticks are needed here (unlike a real/signal-bearing run, D-049).
     orch = Orchestrator(
         bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=[], ticks=[],
         session=SESSION, calendar=NO_BLACKOUT, arms=[_make_arm()], entry_models=entry_models,
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
-        cost_model=cost_model, sl_buffer_usd=0.3, spread_report=spread_report,
+        cost_model=cost_model, sl_buffer_usd=0.3,
     )
     for model in entry_models.values():
         model.get_setup = orch.setup_stream.get_setup

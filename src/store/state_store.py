@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import Literal
 
 from src.core.types import FVG, TF, Swing
-from src.data.spread_report import SpreadReport
+from src.data.spread_report import SpreadSource
 from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 
@@ -56,7 +56,7 @@ class StateStore:
 
     def __init__(
         self,
-        spread_report: SpreadReport | None = None,
+        spread_report: SpreadSource | None = None,
         session_engine: SessionEngine | None = None,
         calendar_engine: CalendarEngine | None = None,
     ) -> None:

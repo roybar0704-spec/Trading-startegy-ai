@@ -40,6 +40,7 @@
 - **AT-3.9 Blackout cancel:** Limit תלוי בתחילת Blackout → מבוטל `blocked_news`.
 - **AT-3.10 [ידני] אימות 20 עסקאות:** דפי Viz מול היומן מול הגרף — המשתמש מאשר שהלוגיקה = הכוונה. **שער חובה.**
 - **AT-3.11 Per-arm quota admission (D-052):** Setup מגיע ל-ARMED; תיק A במכסה מלאה (2 מילויים היום), תיק B פנוי → `setup_arm_outcomes` מראה `blocked_quota` לתיק A ו-`pending`/המשך רגיל לתיק B, על אותה שורת `setups` בדיוק (`setups.outcome` נשאר `armed`, לא מושפע). מוודא ששני התיקים עצמאיים לחלוטין — אין דליפת חסימה בין תיקים.
+- **AT-3.12 median_spread Point-in-Time (D-049, סוגר KI-007):** `ExpandingSpreadReport.median_spread(hour_et)` בכל רגע `t` תלוי אך ורק ב-Ticks שהוזנו ל-`update()` עד `t` — הזנת Ticks נוספים "בעתיד" (אחרי `t`) לא משנה את הערך שכבר הוחזר ב-`t` (בדיקת אי-תלות-בסדר-עתידי, ברמת יחידה). ברמת Orchestrator: `_apply_tick` מזין את ה-Tracker **לפני** שכל בקשת `median_spread` לאותו timestamp נענית (Stage 1 לפני Stage 2); הזרקת Tick עם ספרד קיצוני **אחרי** רגע ה-ARM של Setup לא משפיעה על תוצאת ה-Geometry Check שכבר בוצעה עבורו. שעה (`hour_et`) ללא תצפיות עדיין → `KeyError` (אנומליה גלויה, לא ברירת מחדל שקטה).
 
 ## Phase 4
 - **AT-4.1 Paired entries:** בתוך מודל כניסה — timestamp ומחיר כניסה זהים לשלוש זרועות SL, לכל Setup.

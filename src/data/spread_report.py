@@ -8,11 +8,32 @@ measurement.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import statistics
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from zoneinfo import ZoneInfo
 
 import polars as pl
 
+if TYPE_CHECKING:
+    from src.core.types import Tick
+
 _QUANTILES = (0.25, 0.50, 0.75, 0.95)
+_ET = ZoneInfo("America/New_York")
+
+
+@runtime_checkable
+class SpreadSource(Protocol):
+    """Anything that can back ``MarketContext.median_spread`` (D-039/D-049).
+
+    ``SpreadReport`` (below, T0.6) and ``ExpandingSpreadReport`` both satisfy this
+    structurally — callers (``StateStore``, ``Orchestrator``) depend only on this,
+    never on a concrete class.
+    """
+
+    def median_spread(self, hour_et: int) -> float:
+        """Median spread (USD) for one ET hour; raises KeyError if unavailable."""
 
 
 @dataclass(frozen=True)
@@ -85,3 +106,62 @@ def build_spread_report(ticks: pl.DataFrame, symbol: str) -> SpreadReport:
         for row in grouped.iter_rows(named=True)
     }
     return SpreadReport(symbol=symbol, by_hour=by_hour)
+
+
+@dataclass
+class ExpandingSpreadReport:
+    """Point-in-time-correct median-spread tracker for live backtest decisions.
+
+    D-049, closes KI-007. ``SpreadReport``/``build_spread_report`` above is a Phase 0
+    *one-time, full-period*
+    calibration report (T0.6) — it is what a researcher reads once to propose RA-10, and
+    must never be queried for a live ``min_stop_distance`` decision inside a backtest,
+    since its median already contains data from *after* any given decision timestamp.
+
+    ``ExpandingSpreadReport`` is the opposite: it starts empty (or warm-started from
+    strictly-prior ticks — see ``warm_start``) and only ever grows via ``update()``.
+    ``median_spread(hour_et)`` at any point reflects exactly the ticks fed to it up to
+    that point, in feed order — nothing later, ever. The Orchestrator feeds it every Tick
+    at the moment that Tick is processed (Stage 1), before any Stage 2 decision for that
+    same timestamp can query it, so the accumulated median is always "as of now".
+
+    No Rolling (fixed trailing window) variant is implemented: the Expanding variant was
+    chosen for v1 specifically because it needs no additional declared RA/parameter.
+    """
+
+    symbol: str
+    _spreads_by_hour: dict[int, list[float]] = field(default_factory=lambda: defaultdict(list))
+
+    @classmethod
+    def warm_start(cls, symbol: str, ticks: list[Tick]) -> ExpandingSpreadReport:
+        """Pre-seed from a chronologically-prior tick stream.
+
+        E.g. the 90-day Warm-Up window (SPEC S2/RA-18) — legitimate, not lookahead,
+        since every one of these ticks is strictly earlier than any timestamp this
+        tracker will later be queried for. This is how a real run avoids an
+        empty/degenerate bucket on day 1.
+        """
+        report = cls(symbol=symbol)
+        for tick in ticks:
+            report.update(tick)
+        return report
+
+    def update(self, tick: Tick) -> None:
+        """Record one more observed spread. Call this, and only this, to grow the tracker."""
+        hour_et = tick.ts.astimezone(_ET).hour
+        self._spreads_by_hour[hour_et].append(tick.ask - tick.bid)
+
+    def median_spread(self, hour_et: int) -> float:
+        """Median spread (USD) for ET hour, from ticks observed so far.
+
+        Raises ``KeyError`` if this hour has no observations yet — an anomaly to
+        surface (CLAUDE.md: no silent fallback on data gaps), not a bug to hide behind
+        a default value that would itself be an unrecorded research assumption.
+        """
+        spreads = self._spreads_by_hour.get(hour_et)
+        if not spreads:
+            raise KeyError(
+                f"ExpandingSpreadReport: no spread observations yet for ET hour {hour_et} "
+                "(D-049 forbids falling back to a full-period or future-inclusive value)."
+            )
+        return statistics.median(spreads)
