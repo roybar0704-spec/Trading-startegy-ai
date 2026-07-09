@@ -45,11 +45,14 @@ Neutral → אין עסקאות. אין עסקה נגד Bias. היפוך Bias ת
 - **M2:** Market בסגירת נר ה-Inversion.
 - **M4:** מגע ב-`gap.top` + נר דחייה 1M שנסגר בכיוון → Market בפתיחת הנר הבא.
 
+**הבהרת סמנטיקה — Reference Entry Price מול Execution Price (אושרה במפורש ע"י המשתמש; ר' DECISIONS_LOG D-045):**
+`OrderIntent.price` הוא **Reference Entry Price** — המחיר שעל בסיסו נוצרה כוונת הכניסה — **לא** מחיר הביצוע בפועל, ומאוכלס **תמיד**, בכל מודל כניסה (כולל Market): עבור M1 זהו מחיר ה-Limit (`gap.top`); עבור M2 זהו מחיר סגירת נר ה-Inversion; עבור M4 זהו מחיר `gap.top` (מקום המגע); עבור כל מודל כניסה עתידי — מחיר הייחוס המתאים לו ברגע יצירת הכוונה. מחיר הביצוע בפועל (Execution Price: Spread/Slippage/Gap) נקבע **אך ורק** ע"י FillSimulator בזמן המילוי (§12) ועשוי להיות שונה מה-Reference — זה תקין, ואינו נוגע לשלב אישור העסקה (§9).
+
 ## 9. Stop Loss — שלוש היפותזות מוצהרות (זרועות מחקר)
 `sl_anchor ∈ {R_body, S_body, S_wick}`:
 - R_body = `min(R.open,R.close) − buffer` | S_body = `min(S.open,S.close) − buffer` | S_wick = `S.low − buffer`.
 - Buffer: פרמטר מוצהר. `min_stop_distance = k × median_spread(hour)`.
-- **גאומטריה:** `entry − SL ≥ min_stop_distance`, אחרת `invalid_geometry`.
+- **גאומטריה:** `entry − SL ≥ min_stop_distance`, אחרת `invalid_geometry`. `entry` = **Reference Entry Price** (`OrderIntent.price`, ר' §8) — RiskEngine בודק גאומטריה מול הערך הזה בלבד, לעולם לא מול מחיר ביצוע בפועל.
 - Grid מלא: {M1,M2,M4} × {R_body,S_body,S_wick} = 9 תיקים מבודדים על Setup Stream זהה; בתוך מודל כניסה — כניסה זהה לשלוש זרועות ה-SL. ההכרעה — בנתונים (Paired), ואז ננעל כחוק v1.2.
 
 ## 10. TP / Sizing / מכסה

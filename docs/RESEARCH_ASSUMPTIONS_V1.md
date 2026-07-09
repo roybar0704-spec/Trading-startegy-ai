@@ -43,6 +43,7 @@
 | RA-18 | Warm-Up מבני: 90 יום | מספיק למבנה 4H בשל; מונע Neutral מלאכותי | `warmup_days` |
 | RA-19 | רצועת Tick-on-Demand: ‏1.00$ | מרחק הפעלת רזולוציית Tick סביב SL/TP/גבולות | `tick_on_demand_band_usd` |
 | RA-20 | משקולות Scoring: ‏0.4/0.2/0.2/0.2 | Log-Only — סיכון אפס להחלטות ב-v1 | `scoring_weights` |
+| RA-26 | דיוק Sizing: ללא עיגול (יחידות Float מדויקות, ללא Lot Step) | שלב מחקר בודק את ביצועי האסטרטגיה עצמה, לא מגבלות ברוקר; Lot Step/מגבלות מעבר-ללייב = ניסוי/RA נפרד עתידי, לא חלק מ-v1 (אושר במפורש ע"י המשתמש, ר' DECISIONS_LOG D-044) | `src/risk/sizing.py` (Phase 2) |
 
 ## D. הנחות הגדרת נתונים — רגישות מיוחדת
 

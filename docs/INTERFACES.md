@@ -35,7 +35,12 @@ class Setup: id: str; direction: Literal["long","short"]; fvg_id: str
 
 @dataclass(frozen=True)
 class OrderIntent: setup_id: str; arm: ArmId; side: Side
-                   otype: Literal["limit","market"]; price: float | None
+                   otype: Literal["limit","market"]
+                   price: float | None   # Reference Entry Price (SPEC §8/§9, D-045).
+                                          # Always populated by every EntryModel, incl. Market
+                                          # (e.g. M2 = Inversion-candle close). NOT the fill
+                                          # price -- RiskEngine geometry checks read this only;
+                                          # FillSimulator alone determines the execution price.
                    sl: float; tp: float; valid_until: dt
 
 @dataclass(frozen=True)
@@ -101,6 +106,8 @@ class EntryModel(Protocol):
 
 class RiskEngine(Protocol):           # מופע לכל תיק/זרוע
     def approve(self, intent: OrderIntent, ctx: MarketContext) -> Order | Rejection
+    # Geometry (entry - SL >= min_stop_distance) reads intent.price (Reference Entry
+    # Price) only -- never an execution/fill price. See D-045.
 
 class CostModel(Protocol):
     def stop_slippage(self, ts: dt, in_news: bool) -> float
