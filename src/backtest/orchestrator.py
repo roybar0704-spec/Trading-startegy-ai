@@ -45,8 +45,7 @@ from src.session.session_engine import SessionEngine
 from src.store.state_store import StateStore
 from src.structure.engine import StructureEngine
 
-_ENTRY_ORDER = {"bar4h": 0, "bar5m": 1, "bar1m": 2, "tick": 3}  # H2: 1M->5M->4H, then Ticks
-_TF_PRIORITY = {"bar1m": 0, "bar5m": 1, "bar4h": 2}
+_ENTRY_ORDER = {"bar1m": 0, "bar5m": 1, "bar4h": 2, "tick": 3}  # H2: 1M->5M->4H, then Ticks
 
 
 @dataclass
