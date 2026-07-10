@@ -111,6 +111,11 @@ class Orchestrator:
         )
         self.setup_stream = SetupStream()
         self._pending_by_setup = defaultdict(list)
+        # Every EntryModel's get_setup must resolve through *this* run's SetupStream --
+        # there is no legitimate reason for a caller to wire a different one, and
+        # leaving this to every caller was pure duplicated glue (KI-016 cleanup).
+        for model in self.entry_models.values():
+            model.get_setup = self.setup_stream.get_setup
 
     def run(self) -> RunResult:
         """Process the full merged timeline; return summary counters."""

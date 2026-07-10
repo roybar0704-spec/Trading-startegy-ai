@@ -94,8 +94,6 @@ def bench_orchestrator() -> tuple[float, int]:
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
         cost_model=cost_model, sl_buffer_usd=0.3,
     )
-    for model in entry_models.values():
-        model.get_setup = orch.setup_stream.get_setup
 
     t0 = time.perf_counter()
     orch.run()

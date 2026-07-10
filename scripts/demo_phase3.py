@@ -113,8 +113,6 @@ def _make_orchestrator(bars_1m, bars_5m, ticks, arms) -> Orchestrator:
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
         cost_model=COST_MODEL, sl_buffer_usd=0.05, spread_warmup_ticks=_warmup_ticks(),
     )
-    for model in entry_models.values():
-        model.get_setup = orch.setup_stream.get_setup
     orch.store.put(
         FVG(
             id="FVG-H4-1", tf=TF.H4, direction="bull", top=TOP, bottom=BOTTOM, level=1,

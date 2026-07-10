@@ -84,9 +84,6 @@ def make_orchestrator(
         cost_model=cost_model(), sl_buffer_usd=0.05,
         spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}), journal=None,
     )
-    # get_setup wasn't known until the Orchestrator built its own SetupStream -- wire it now.
-    for model in entry_models.values():
-        model.get_setup = orch.setup_stream.get_setup
     return orch
 
 

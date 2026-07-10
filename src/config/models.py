@@ -237,6 +237,7 @@ class Parameters(_Strict):
     warmup_days: int
     tick_on_demand_band_usd: float
     scoring_weights: ScoringWeights
+    initial_equity_usd: float
 
 
 # ---- RunConfig (config/run_default.yaml) -------------------------------

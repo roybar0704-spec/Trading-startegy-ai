@@ -136,8 +136,18 @@ class FillSimulator(Protocol):
 ## Orchestrator / Journal / Validation / Tracker
 ```python
 class Orchestrator:
-    def run(self, cfg: RunConfig) -> RunResult
-    # לולאה דו-שלבית; מחזיקה 9 תיקים; כותבת ליומן בלבד
+    def run(self) -> RunResult
+    # לולאה דו-שלבית; מחזיקה N תיקים (arms מוזרק ל-constructor); כותבת ליומן בלבד.
+    # כל הדאטה/מנועים/תיקים מוזרקים ל-constructor (D-037) -- לא ל-run() עצמה.
+
+# build_orchestrator (src/backtest/run_builder.py, D-057, סוגר KI-016/KI-017):
+# התרגום מ-RulesV1/Parameters/RunConfig (config/models.py) ל-constructor args של
+# Orchestrator קורה כאן, במקום אחד -- לא ידנית אצל כל קורא. חתימה:
+def build_orchestrator(
+    rules: RulesV1, parameters: Parameters, run_config: RunConfig, *,
+    bars_1m, bars_5m, bars_4h, ticks, news=(), spread_warmup_ticks=(),
+    journal=None, run_id="run",
+) -> Orchestrator: ...
 
 class Journal(Protocol):
     def record(self, table: str, row: dict) -> None    # טרנזקציוני, append-only
