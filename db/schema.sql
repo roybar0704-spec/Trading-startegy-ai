@@ -1,7 +1,7 @@
 -- XAUUSD Research Platform — DuckDB Schema v1
 -- כל הזמנים UTC (TIMESTAMPTZ). Append-Only: אין UPDATE/DELETE על טבלאות מחקר.
 
-CREATE TABLE experiments (
+CREATE TABLE IF NOT EXISTS experiments (
     experiment_id   TEXT PRIMARY KEY,
     name            TEXT NOT NULL,
     hypothesis      TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE experiments (
     created_at      TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE runs (
+CREATE TABLE IF NOT EXISTS runs (
     run_id          TEXT PRIMARY KEY,
     experiment_id   TEXT NOT NULL REFERENCES experiments(experiment_id),
     config_hash     TEXT NOT NULL,          -- SHA256(config+data_ver+code_ver)
@@ -24,7 +24,7 @@ CREATE TABLE runs (
     created_at      TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE portfolios (                   -- זרוע = תיק מבודד
+CREATE TABLE IF NOT EXISTS portfolios (                   -- זרוע = תיק מבודד
     portfolio_id    TEXT PRIMARY KEY,
     run_id          TEXT NOT NULL REFERENCES runs(run_id),
     entry_model     TEXT NOT NULL CHECK (entry_model IN ('M1','M2','M4')),
@@ -32,7 +32,7 @@ CREATE TABLE portfolios (                   -- זרוע = תיק מבודד
     initial_equity  DOUBLE NOT NULL
 );
 
-CREATE TABLE sessions (                     -- שורה ליום מסחר
+CREATE TABLE IF NOT EXISTS sessions (                     -- שורה ליום מסחר
     run_id          TEXT NOT NULL,
     ny_date         DATE NOT NULL,
     effective_window_minutes  INTEGER NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE sessions (                     -- שורה ליום מסחר
     PRIMARY KEY (run_id, ny_date)
 );
 
-CREATE TABLE bias_history (
+CREATE TABLE IF NOT EXISTS bias_history (
     run_id      TEXT NOT NULL,
     ts          TIMESTAMPTZ NOT NULL,
     state       TEXT NOT NULL CHECK (state IN ('bullish','bearish','neutral')),
@@ -49,7 +49,7 @@ CREATE TABLE bias_history (
     PRIMARY KEY (run_id, ts)
 );
 
-CREATE TABLE fvg_registry (
+CREATE TABLE IF NOT EXISTS fvg_registry (
     fvg_id        TEXT PRIMARY KEY,
     run_id        TEXT NOT NULL,
     tf            TEXT NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE fvg_registry (
 -- הערכים שאינם תלויי-תיק (הזהים ל-9 התיקים) -- ר' SPEC_V1_FROZEN.md §14.
 -- תוצאה תלויית-תיק (closed/blocked_news/blocked_quota/invalid_geometry) חייבת
 -- להישמר ב-setup_arm_outcomes בלבד; לעולם לא כאן.
-CREATE TABLE setups (
+CREATE TABLE IF NOT EXISTS setups (
     setup_id      TEXT PRIMARY KEY,
     run_id        TEXT NOT NULL,
     direction     TEXT NOT NULL CHECK (direction IN ('long','short')),
@@ -87,7 +87,7 @@ CREATE TABLE setups (
     state_log     JSON NOT NULL             -- [{state,ts,reason}] — מעברי ה-FSM המשותפים בלבד
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     order_id      TEXT PRIMARY KEY,
     setup_id      TEXT NOT NULL REFERENCES setups(setup_id),
     portfolio_id  TEXT NOT NULL REFERENCES portfolios(portfolio_id),
@@ -105,12 +105,17 @@ CREATE TABLE orders (
     cancel_reason TEXT
 );
 
--- תוצאה פר-(Setup, תיק) -- D-052. שורה נוצרת עבור כל אחד מ-9 התיקים ברגע
--- שה-Setup המקביל מגיע ל-ARMED (outcome='pending' כברירת מחדל), ומתעדכנת
--- ל-ערך סופי כשהתיק הזה מגיע לתוצאה משלו. תיק אחד יכול לקבל blocked_quota בעוד
--- תיק אחר על אותו Setup בדיוק ממשיך רגיל -- זו בדיוק הנקודה: 9 התיקים עצמאיים
--- לחלוטין, גם כשה-Setup הבסיסי (FVG/R/S/iFVG) זהה.
-CREATE TABLE setup_arm_outcomes (
+-- תוצאה פר-(Setup, תיק) -- D-052. שורה נוצרת עבור כל אחד מ-9 התיקים ברגע שהתיק
+-- הזה מגיע לתוצאה סופית משלו (ARMED כשלעצמו אינו כותב שורה כאן -- ר' D-060).
+-- תיק אחד יכול לקבל blocked_quota בעוד תיק אחר על אותו Setup בדיוק ממשיך רגיל --
+-- זו בדיוק הנקודה: 9 התיקים עצמאיים לחלוטין, גם כשה-Setup הבסיסי זהה.
+-- D-060 (Append-Only, ללא UPDATE): "pending" מוצהר ב-CHECK אך **לא נכתב בפועל**
+-- כשורת-ביניים -- שורה אחת בלבד נכתבת פר-(setup_id,portfolio_id), ברגע שהתוצאה
+-- כבר סופית (closed/expired/invalidated/blocked_news/blocked_quota/
+-- invalid_geometry). פוזיציה שעדיין פתוחה בתום הריצה (Overnight מותר) לא
+-- מקבלת שורה כלל -- ר' KI-019. הכרעה עתידית ל-Event Log אמיתי (PK מגורסן)
+-- תישאר v2+ אם תידרש (ר' DECISIONS_LOG D-060).
+CREATE TABLE IF NOT EXISTS setup_arm_outcomes (
     setup_id      TEXT NOT NULL REFERENCES setups(setup_id),
     portfolio_id  TEXT NOT NULL REFERENCES portfolios(portfolio_id),
     outcome       TEXT NOT NULL CHECK (outcome IN
@@ -122,7 +127,7 @@ CREATE TABLE setup_arm_outcomes (
     PRIMARY KEY (setup_id, portfolio_id)
 );
 
-CREATE TABLE trades (
+CREATE TABLE IF NOT EXISTS trades (
     trade_id      TEXT PRIMARY KEY,
     order_id      TEXT NOT NULL REFERENCES orders(order_id),
     portfolio_id  TEXT NOT NULL,
@@ -148,7 +153,7 @@ CREATE TABLE trades (
     hour_bucket_et INTEGER
 );
 
-CREATE TABLE equity_curve (
+CREATE TABLE IF NOT EXISTS equity_curve (
     portfolio_id  TEXT NOT NULL,
     ts            TIMESTAMPTZ NOT NULL,
     balance_r     DOUBLE NOT NULL,          -- ממומש, ב-R מצטבר
@@ -156,7 +161,7 @@ CREATE TABLE equity_curve (
     PRIMARY KEY (portfolio_id, ts)
 );
 
-CREATE TABLE news_events (
+CREATE TABLE IF NOT EXISTS news_events (
     ts_utc      TIMESTAMPTZ NOT NULL,
     currency    TEXT NOT NULL,
     impact      TEXT NOT NULL,
@@ -165,13 +170,13 @@ CREATE TABLE news_events (
     PRIMARY KEY (ts_utc, title)
 );
 
-CREATE TABLE scores (
+CREATE TABLE IF NOT EXISTS scores (
     setup_id    TEXT PRIMARY KEY REFERENCES setups(setup_id),
     components  JSON NOT NULL,              -- {fvg_level, ts, sweep_quality, bias_recency}
     total       DOUBLE NOT NULL
 );
 
-CREATE TABLE ai_annotations (
+CREATE TABLE IF NOT EXISTS ai_annotations (
     annotation_id TEXT PRIMARY KEY,
     ref_kind      TEXT NOT NULL CHECK (ref_kind IN ('setup','trade','session')),
     ref_id        TEXT NOT NULL,
@@ -181,7 +186,7 @@ CREATE TABLE ai_annotations (
     created_at    TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE baseline_runs (
+CREATE TABLE IF NOT EXISTS baseline_runs (
     baseline_id   TEXT PRIMARY KEY,
     run_id        TEXT NOT NULL,
     portfolio_arm JSON NOT NULL,            -- {entry_model, sl_anchor}
@@ -193,7 +198,7 @@ CREATE TABLE baseline_runs (
 
 -- ============ Feature Store (D-028) ============
 
-CREATE TABLE feature_registry (
+CREATE TABLE IF NOT EXISTS feature_registry (
     feature       TEXT PRIMARY KEY,
     dtype         TEXT NOT NULL CHECK (dtype IN ('num','text')),
     definition    TEXT NOT NULL,
@@ -203,7 +208,7 @@ CREATE TABLE feature_registry (
     added_at      TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE trade_features (               -- EAV: הרחבה ללא מיגרציות
+CREATE TABLE IF NOT EXISTS trade_features (               -- EAV: הרחבה ללא מיגרציות
     trade_id      TEXT NOT NULL REFERENCES trades(trade_id),
     feature       TEXT NOT NULL REFERENCES feature_registry(feature),
     value_num     DOUBLE,
@@ -213,9 +218,13 @@ CREATE TABLE trade_features (               -- EAV: הרחבה ללא מיגרצ
     PRIMARY KEY (trade_id, feature)
 );
 
-CREATE TABLE context_snapshots (            -- נקודתי-בזמן: confirmed_at <= ts בלבד
+CREATE TABLE IF NOT EXISTS context_snapshots (            -- נקודתי-בזמן: confirmed_at <= ts בלבד
     snapshot_id   TEXT PRIMARY KEY,
     setup_id      TEXT NOT NULL REFERENCES setups(setup_id),
+    -- D-058: engagement/armed הם model-agnostic (order_id=NULL, שורה אחת לכל Setup,
+    -- זהה ל-9 התיקים). entry/exit הם פר-תיק (order_id חובה, שורה אחת לכל Order) --
+    -- אותו עיקרון בדיוק כמו setup_arm_outcomes (D-052).
+    order_id      TEXT REFERENCES orders(order_id),
     kind          TEXT NOT NULL CHECK (kind IN ('engagement','armed','entry','exit')),
     ts            TIMESTAMPTZ NOT NULL,
     payload       JSON NOT NULL

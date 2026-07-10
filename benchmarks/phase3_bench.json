@@ -1,11 +1,11 @@
 {
-  "measured_at": "2026-07-10T07:49:06.342296+00:00",
+  "measured_at": "2026-07-10T11:16:49.250610+00:00",
   "orchestrator": {
     "days_simulated": 20,
     "bars_processed": 34560,
-    "seconds": 0.2178,
-    "bars_per_second": 158652.4
+    "seconds": 0.2202,
+    "bars_per_second": 156926.5
   },
-  "peak_rss_mb": 88.2,
+  "peak_rss_mb": 88.6,
   "note": "No pre-declared Phase 3 budget in QUALITY_GATES.md; establishes D-032's initial measurement. Quiet bars only (no signals) -- baseline looping cost."
 }

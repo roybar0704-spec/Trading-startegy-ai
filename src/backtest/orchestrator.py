@@ -25,10 +25,12 @@ to the (up to 3) arms sharing the M4 model.
 
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, date, datetime
 
+from src.backtest.context_snapshot import bar_to_json, ifvg_to_json, make_snapshot_row
 from src.backtest.portfolio_arm import PortfolioArm
 from src.core.types import TF, Bar, Order, Rejection, SetupEvent, Tick
 from src.data.spread_report import ExpandingSpreadReport
@@ -94,6 +96,10 @@ class Orchestrator:
     setup_stream: SetupStream = field(init=False)
     spread_tracker: ExpandingSpreadReport = field(init=False)
     _pending_by_setup: dict[str, list[tuple[PortfolioArm, str]]] = field(init=False)
+    # Engagement snapshots are captured before `setups` can legally exist (outcome
+    # is NOT NULL -- unknown at Engagement) -- held here until the Setup's terminal
+    # model-agnostic event writes the setups row they FK to. See _finalize_setup_journal.
+    _pending_engagement_snapshots: dict[str, dict] = field(init=False)
 
     def __post_init__(self) -> None:
         """Wire the shared engines. One StateStore/SetupStream for the whole run."""
@@ -111,14 +117,70 @@ class Orchestrator:
         )
         self.setup_stream = SetupStream()
         self._pending_by_setup = defaultdict(list)
+        self._pending_engagement_snapshots = {}
         # Every EntryModel's get_setup must resolve through *this* run's SetupStream --
         # there is no legitimate reason for a caller to wire a different one, and
         # leaving this to every caller was pure duplicated glue (KI-016 cleanup).
         for model in self.entry_models.values():
             model.get_setup = self.setup_stream.get_setup
 
+    def _write_run_identity_rows(self) -> None:
+        """Write experiments/runs/portfolios once, before anything that FKs to them.
+
+        KI-018 (partial): config_hash/code_version/data_version/split_type/seed are
+        not knowable to this data/config-agnostic Orchestrator (D-037) -- clearly
+        marked placeholders are used; real values require run_builder/config_hash()
+        wiring, which this class deliberately doesn't own. Without this method,
+        *nothing* referencing portfolios/runs/experiments could ever be journaled --
+        found while testing T3.6 against real FK constraints for the first time
+        (D-059): setups/portfolios/runs/experiments had never actually been written.
+        """
+        if self.journal is None:
+            return
+        experiment_id = f"{self.run_id}-exp"
+        all_ts = [b.close_ts for b in (*self.bars_1m, *self.bars_5m, *self.bars_4h)]
+        period_start = min(all_ts).date() if all_ts else date.today()
+        period_end = max(all_ts).date() if all_ts else date.today()
+        created_at = min(all_ts) if all_ts else datetime.now(UTC)
+
+        self.journal.record(
+            "experiments",
+            {
+                "experiment_id": experiment_id, "name": self.run_id,
+                "hypothesis": "n/a -- Orchestrator run, not a declared Experiment (KI-018)",
+                "objective_fn": "n/a",
+                "declared_grid": json.dumps(
+                    {
+                        "entry_models": sorted({a.arm_id.entry for a in self.arms}),
+                        "sl_anchors": sorted({a.arm_id.sl_anchor for a in self.arms}),
+                    }
+                ),
+                "holdout_range": json.dumps(None), "created_at": created_at,
+            },
+        )
+        self.journal.record(
+            "runs",
+            {
+                "run_id": self.run_id, "experiment_id": experiment_id,
+                "config_hash": "unknown", "code_version": "unknown",
+                "data_version": "unknown", "period_start": period_start,
+                "period_end": period_end, "split_type": "unknown", "seed": 0,
+                "created_at": created_at,
+            },
+        )
+        for arm in self.arms:
+            self.journal.record(
+                "portfolios",
+                {
+                    "portfolio_id": arm.portfolio.portfolio_id, "run_id": self.run_id,
+                    "entry_model": arm.arm_id.entry, "sl_anchor": arm.arm_id.sl_anchor,
+                    "initial_equity": arm.portfolio.initial_equity,
+                },
+            )
+
     def run(self) -> RunResult:
         """Process the full merged timeline; return summary counters."""
+        self._write_run_identity_rows()
         result = RunResult()
         was_in_window = False
         was_in_blackout = False
@@ -145,10 +207,16 @@ class Orchestrator:
             ctx = self.store.as_of(ts)
             for event in self.setup_stream.step(ctx):
                 self._count_event(result, event)
-                if event.kind == "armed" and not event.post_arm:
+                if event.kind == "engaged":
+                    self._buffer_engagement_snapshot(ts, ctx, event.setup_id)
+                elif event.kind == "armed" and not event.post_arm:
+                    self._finalize_setup_journal(event.setup_id, ts)
+                    self._record_snapshot("armed", ts, ctx, event.setup_id)
                     if in_window and not in_blackout:
                         self._open_orders_for_event(event, ctx, result)
                 elif event.kind in ("invalidated", "expired", "no_ifvg"):
+                    if not event.post_arm:
+                        self._finalize_setup_journal(event.setup_id, ts)
                     self._cancel_for_setup(ts, event.setup_id, event.kind)
 
             was_in_window, was_in_blackout = in_window, in_blackout
@@ -205,6 +273,65 @@ class Orchestrator:
                 {"run_id": self.run_id, "ts": ts, "state": ev.state, "trigger_bos": None},
             )
 
+    def _record_snapshot(
+        self, kind: str, ts: datetime, ctx, setup_id: str, order: Order | None = None,
+    ) -> None:
+        """Record one context_snapshots row.
+
+        engagement/armed (order=None, model-agnostic) or entry/exit (order
+        required, per-arm) -- see src/backtest/context_snapshot.py (D-058).
+        """
+        if self.journal is None:
+            return
+        setup = self.setup_stream.get_setup(setup_id)
+        self.journal.record(
+            "context_snapshots", make_snapshot_row(kind, ts, ctx, setup, order)
+        )
+
+    def _buffer_engagement_snapshot(self, ts: datetime, ctx, setup_id: str) -> None:
+        """Build the engagement snapshot now, but hold it for later.
+
+        Its content is correctly point-in-time already -- it's only the *write* that
+        waits: ``context_snapshots.setup_id`` FKs to ``setups``, and
+        ``setups.outcome`` is NOT NULL, so that row cannot exist yet at Engagement.
+        Flushed by ``_finalize_setup_journal`` once the Setup reaches its first
+        model-agnostic terminal event.
+        """
+        if self.journal is None:
+            return
+        setup = self.setup_stream.get_setup(setup_id)
+        self._pending_engagement_snapshots[setup_id] = make_snapshot_row(
+            "engagement", ts, ctx, setup
+        )
+
+    def _finalize_setup_journal(self, setup_id: str, ts: datetime) -> None:
+        """Write this Setup's one ``setups`` row and flush its buffered snapshot.
+
+        Only possible now that the Setup's model-agnostic outcome is finally known.
+        Every other Journal write that FKs to ``setups`` (orders, setup_arm_outcomes,
+        context_snapshots) happens at or after this same event, so this must run
+        first among them -- callers order it that way (see ``run()``).
+        """
+        if self.journal is None:
+            return
+        setup = self.setup_stream.get_setup(setup_id)
+        self.journal.record(
+            "setups",
+            {
+                "setup_id": setup.id, "run_id": self.run_id, "direction": setup.direction,
+                "fvg_id": setup.fvg_id, "engagement_ts": setup.engagement_ts,
+                "r_bar": json.dumps(bar_to_json(setup.r_bar)),
+                "s_bar": json.dumps(bar_to_json(setup.s_bar)),
+                "ifvg": json.dumps(ifvg_to_json(setup.ifvg)), "ts_flag": setup.ts_flag,
+                "same_zone_reentry": setup.same_zone_reentry, "score": setup.score,
+                "outcome": setup.outcome, "outcome_reason": setup.outcome_reason,
+                "state_log": "[]",
+            },
+        )
+        pending = self._pending_engagement_snapshots.pop(setup_id, None)
+        if pending is not None:
+            self.journal.record("context_snapshots", pending)
+
     # ---- Stage 2: setup-event -> order flow --------------------------------
 
     def _count_event(self, result: RunResult, event: SetupEvent) -> None:
@@ -238,11 +365,13 @@ class Orchestrator:
         self._pending_by_setup[outcome.setup_id].append((arm, outcome.order_id))
         if result is not None:
             result.orders_placed += 1
-        self._record_arm_outcome(outcome.setup_id, arm, "pending", order_id=outcome.order_id)
-        # No Journal write here: `orders` (append-only, order_id is PK) is written exactly
-        # once, at whichever event makes this order reach ITS terminal state -- filled
-        # (_on_fill, entry leg) or cancelled (_write_cancelled_order). Writing at placement
-        # too would need a second INSERT with the same PK once it resolves.
+        # No Journal write here, for *either* orders or setup_arm_outcomes (D-060):
+        # both are append-only, single-row-per-key tables (order_id / (setup_id,
+        # portfolio_id)) -- an interim "pending" row would need a later UPDATE to
+        # reach its real outcome, which the append-only design forbids. Each is
+        # written exactly once, at whichever event makes this order/arm reach its
+        # actual terminal state: filled+closed (_close_trade), or cancelled
+        # (_cancel_for_setup) -- see KI-019 for the one edge case this leaves open.
 
     def _record_arm_outcome(
         self, setup_id: str, arm: PortfolioArm, outcome: str, order_id: str | None,
@@ -282,6 +411,7 @@ class Orchestrator:
                 "cancel_reason": None,
             },
         )
+        self._record_snapshot("entry", fill.ts, self.store.as_of(fill.ts), order.setup_id, order)
 
     def _close_trade(self, arm: PortfolioArm, fill) -> None:
         """Exit fill: compute R-multiple/P&L, journal the trade, update realized equity.
@@ -321,6 +451,12 @@ class Orchestrator:
                     "hour_bucket_et": self.session.local(order.filled_at).hour,
                 },
             )
+            self._record_snapshot(
+                "exit", fill.ts, self.store.as_of(fill.ts), order.setup_id, order
+            )
+            # orders row for this order_id already exists (written at fill time,
+            # _write_filled_order) -- FK-safe to record the arm's terminal outcome now.
+            self._record_arm_outcome(order.setup_id, arm, "closed", order_id=order.order_id)
 
     def _cancel_all_pending(self, ts: datetime, reason: str) -> None:
         for setup_id in list(self._pending_by_setup.keys()):
@@ -329,9 +465,18 @@ class Orchestrator:
     def _cancel_for_setup(self, ts: datetime, setup_id: str, reason: str) -> None:
         pending = self._pending_by_setup.pop(setup_id, [])
         for arm, order_id in pending:
+            # `_pending_by_setup` is never trimmed as individual orders fill (only
+            # popped whole, here) -- an entry recorded at placement may have already
+            # filled by the time a *later* cancellation event fires for this setup.
+            # A filled order resolves its own outcome via _close_trade ("closed"),
+            # never via cancellation -- skip it, or this would both mis-record its
+            # outcome as `reason` and collide with _close_trade's PK write later.
+            if arm.fill_sim.get_order(order_id).status != "pending":
+                continue
             arm.fill_sim.cancel(order_id, reason)
-            self._record_arm_outcome(setup_id, arm, reason, order_id=order_id)
+            # Write the cancelled orders row *before* the arm outcome that FKs to it.
             self._write_cancelled_order(arm, order_id)
+            self._record_arm_outcome(setup_id, arm, reason, order_id=order_id)
 
     def _write_cancelled_order(self, arm: PortfolioArm, order_id: str) -> None:
         if self.journal is None:

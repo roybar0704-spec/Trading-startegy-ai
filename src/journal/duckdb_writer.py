@@ -41,6 +41,10 @@ class DuckDBJournal:
             list(row.values()),
         )
 
+    def query(self, sql: str, params: list | None = None) -> list[tuple]:
+        """Read-only fetch (tests/inspection) -- never used by write paths."""
+        return self._con.execute(sql, params or []).fetchall()
+
     def close(self) -> None:
         """Close the underlying DuckDB connection."""
         self._con.close()
