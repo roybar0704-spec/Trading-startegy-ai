@@ -194,15 +194,15 @@ class Orchestrator:
                 elif kind == "bar1m":
                     self._apply_1m(obj)
                 elif kind == "tick":
-                    self._apply_tick(obj)
+                    self._apply_tick(obj, result)
 
             in_window = self.store.in_window(ts)
             in_blackout = self.store.in_blackout(ts)
 
             if was_in_window and not in_window:
-                self._cancel_all_pending(ts, "expired")
+                self._cancel_all_pending(ts, "expired", result)
             if not was_in_blackout and in_blackout:
-                self._cancel_all_pending(ts, "blocked_news")
+                self._cancel_all_pending(ts, "blocked_news", result)
 
             ctx = self.store.as_of(ts)
             for event in self.setup_stream.step(ctx):
@@ -217,7 +217,7 @@ class Orchestrator:
                 elif event.kind in ("invalidated", "expired", "no_ifvg"):
                     if not event.post_arm:
                         self._finalize_setup_journal(event.setup_id, ts)
-                    self._cancel_for_setup(ts, event.setup_id, event.kind)
+                    self._cancel_for_setup(ts, event.setup_id, event.kind, result)
 
             was_in_window, was_in_blackout = in_window, in_blackout
 
@@ -253,14 +253,14 @@ class Orchestrator:
                 if intent is not None:
                     self._route_intent("M4", intent, ctx, result=None)
 
-    def _apply_tick(self, tick: Tick) -> None:
+    def _apply_tick(self, tick: Tick, result: RunResult) -> None:
         # Grow the point-in-time spread tracker first (D-049): this tick's own spread
         # must already be included by the time Stage 2 queries median_spread() for the
         # same timestamp, and this ordering has no bearing on fill simulation below.
         self.spread_tracker.update(tick)
         for arm in self.arms:
             for fill in arm.fill_sim.on_tick(tick):
-                self._on_fill(arm, fill)
+                self._on_fill(arm, fill, result)
 
     def _record_bias_if_journaled(self, ts: datetime) -> None:
         if self.journal is None:
@@ -387,7 +387,8 @@ class Orchestrator:
             },
         )
 
-    def _on_fill(self, arm: PortfolioArm, fill) -> None:
+    def _on_fill(self, arm: PortfolioArm, fill, result: RunResult) -> None:
+        result.fills += 1
         if fill.kind in ("limit_entry", "market_entry"):
             ny_date = self.session.ny_date(fill.ts)
             arm.portfolio.record_fill(ny_date)
@@ -458,11 +459,13 @@ class Orchestrator:
             # _write_filled_order) -- FK-safe to record the arm's terminal outcome now.
             self._record_arm_outcome(order.setup_id, arm, "closed", order_id=order.order_id)
 
-    def _cancel_all_pending(self, ts: datetime, reason: str) -> None:
+    def _cancel_all_pending(self, ts: datetime, reason: str, result: RunResult) -> None:
         for setup_id in list(self._pending_by_setup.keys()):
-            self._cancel_for_setup(ts, setup_id, reason)
+            self._cancel_for_setup(ts, setup_id, reason, result)
 
-    def _cancel_for_setup(self, ts: datetime, setup_id: str, reason: str) -> None:
+    def _cancel_for_setup(
+        self, ts: datetime, setup_id: str, reason: str, result: RunResult,
+    ) -> None:
         pending = self._pending_by_setup.pop(setup_id, [])
         for arm, order_id in pending:
             # `_pending_by_setup` is never trimmed as individual orders fill (only
@@ -474,6 +477,7 @@ class Orchestrator:
             if arm.fill_sim.get_order(order_id).status != "pending":
                 continue
             arm.fill_sim.cancel(order_id, reason)
+            result.orders_cancelled += 1
             # Write the cancelled orders row *before* the arm outcome that FKs to it.
             self._write_cancelled_order(arm, order_id)
             self._record_arm_outcome(setup_id, arm, reason, order_id=order_id)
