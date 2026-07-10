@@ -28,11 +28,16 @@ from src.entry.m2 import M2EntryModel
 from src.entry.m4 import M4EntryModel
 from src.execution.cost_model import CostModelParams, StaticCostModel
 from src.execution.fill_simulator import FillSimulator
+from src.journal.duckdb_writer import DuckDBJournal
 from src.risk.engine import RiskEngine, RiskEngineParams
 from src.risk.portfolio import Portfolio
 from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 from src.store.state_store import BiasEvent
+from src.viz.trade_page import build_trade_page
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SCHEMA_PATH = REPO_ROOT / "db" / "schema.sql"
 
 SESSION = SessionEngine.from_config(window=("08:30", "10:30"), tz="America/New_York")
 NO_BLACKOUT = CalendarEngine.from_config(
@@ -101,7 +106,7 @@ def _warmup_ticks() -> list[Tick]:
     ]
 
 
-def _make_orchestrator(bars_1m, bars_5m, ticks, arms) -> Orchestrator:
+def _make_orchestrator(bars_1m, bars_5m, ticks, arms, journal=None) -> Orchestrator:
     entry_models = {
         "M1": M1EntryModel(session=SESSION, get_setup=None),
         "M2": M2EntryModel(get_setup=None),
@@ -112,6 +117,7 @@ def _make_orchestrator(bars_1m, bars_5m, ticks, arms) -> Orchestrator:
         session=SESSION, calendar=NO_BLACKOUT, arms=arms, entry_models=entry_models,
         displacement_model=D1BodyRatio(), displacement_params=D1_DEFAULT_PARAMS,
         cost_model=COST_MODEL, sl_buffer_usd=0.05, spread_warmup_ticks=_warmup_ticks(),
+        journal=journal,
     )
     orch.store.put(
         FVG(
@@ -171,11 +177,54 @@ def demo_orchestrator_end_to_end() -> None:
     report_line("equity changed (KI-006 wiring)", True, arm.portfolio.realized_equity != 10_000.0)
 
 
+def demo_context_snapshots_and_viz() -> None:
+    print("\n== Context Snapshots (T3.6) + Trade Page Viz (T3.5) ==")
+    r_ts = IN_WINDOW + timedelta(minutes=5)
+    s_ts = IN_WINDOW + timedelta(minutes=10)
+    base = IN_WINDOW + timedelta(minutes=20)
+    bars_1m = [
+        _m1(IN_WINDOW, 100.5, 100.6, 99.5, 100.2),
+        _m1(base, 97.5, 97.6, 97.0, 97.3),
+        _m1(base + timedelta(minutes=1), 97.2, 97.3, 96.8, 97.0),
+        _m1(base + timedelta(minutes=2), 96.4, 96.5, 96.2, 96.3),
+        _m1(base + timedelta(minutes=3), 96.8, 97.3, 96.7, 97.2),
+    ]
+    bars_5m = [_m5(r_ts, 99.0, 99.8, 97.0, 99.5), _m5(s_ts, 98.0, 98.5, 96.0, 97.5)]
+    inversion_ts = bars_1m[-1].close_ts
+    ticks = [
+        Tick(ts=inversion_ts + timedelta(seconds=1), bid=97.15, ask=97.25),
+        Tick(ts=inversion_ts + timedelta(minutes=5), bid=101.0, ask=101.1),
+    ]
+    arm = _make_arm("M2", "S_wick")
+    out_dir = REPO_ROOT / "data" / "demo"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    db_path = out_dir / "phase3_demo.duckdb"
+    db_path.unlink(missing_ok=True)
+    journal = DuckDBJournal(db_path, SCHEMA_PATH)
+    orch = _make_orchestrator(bars_1m, bars_5m, ticks, arms=[arm], journal=journal)
+    orch.run()  # closes `journal`
+
+    reader = DuckDBJournal(db_path, SCHEMA_PATH)
+    snapshot_kinds = reader.query("SELECT kind FROM context_snapshots ORDER BY ts")
+    report_line(
+        "context_snapshots kinds", ["engagement", "armed", "entry", "exit"],
+        [k for (k,) in snapshot_kinds],
+    )
+    [(trade_id,)] = reader.query("SELECT trade_id FROM trades")
+    fig = build_trade_page(reader, trade_id, bars_1m)
+    reader.close()
+
+    out_path = out_dir / "phase3_trade_page.html"
+    fig.write_html(out_path)
+    print(f"  trade page written to {out_path}")
+
+
 def main() -> None:
     print("Phase 3 demo: Session/Calendar/Setup Stream/Orchestrator vs. hand calculation")
     demo_session_calendar()
     demo_setup_stream_progression()
     demo_orchestrator_end_to_end()
+    demo_context_snapshots_and_viz()
     print("\nPhase 3 demo complete.")
 
 

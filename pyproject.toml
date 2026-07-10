@@ -12,6 +12,7 @@ dependencies = [
     "pyyaml>=6.0",
     "plotly>=5.24",
     "tzdata>=2024.2",
+    "pytz>=2024.2",  # duckdb's Python client needs this to fetch TIMESTAMPTZ columns
 ]
 
 [project.optional-dependencies]
@@ -73,6 +74,15 @@ name = "core is dependency-free (D-038)"
 type = "forbidden"
 source_modules = ["src.core"]
 forbidden_modules = ["src.config", "src.data"]
+
+[[tool.importlinter.contracts]]
+name = "Viz has no engine dependencies (T3.5)"
+type = "forbidden"
+source_modules = ["src.viz"]
+forbidden_modules = [
+    "src.backtest", "src.entry", "src.risk", "src.execution",
+    "src.structure", "src.fvg", "src.displacement", "src.store",
+]
 
 [[tool.importlinter.contracts]]
 name = "Engine layering (Phase 3: {data, session, journal} <- store <- displacement <- {structure, fvg} <- {entry, risk, execution} <- backtest)"
