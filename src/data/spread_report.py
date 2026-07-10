@@ -19,7 +19,6 @@ import polars as pl
 if TYPE_CHECKING:
     from src.core.types import Tick
 
-_QUANTILES = (0.25, 0.50, 0.75, 0.95)
 _ET = ZoneInfo("America/New_York")
 
 
