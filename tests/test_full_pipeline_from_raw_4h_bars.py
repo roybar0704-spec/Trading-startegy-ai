@@ -22,7 +22,7 @@ from src.backtest.run_builder import build_orchestrator
 from src.config.models import load_parameters, load_rules_v1, load_run_config
 from src.core.types import TF, Bar, Tick
 from src.journal.duckdb_writer import DuckDBJournal
-from tests.fixtures.orchestrator import warmup_ticks
+from tests.fixtures.orchestrator import make_identity, warmup_ticks
 from tests.fixtures.setup_stream import m1, m5
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -55,7 +55,7 @@ def _raw_4h_bars() -> list[Bar]:
     ]
 
 
-def _scenario(journal=None):
+def _scenario(journal=None, registry_path=None):
     rules, params, run_cfg = load_rules_v1(), load_parameters(), load_run_config()
     # Tiny geometry threshold -- real geometry is covered elsewhere (test_at2_6);
     # the point of this test is the wiring from raw bars to a Journal-recorded trade.
@@ -89,8 +89,10 @@ def _scenario(journal=None):
     ]
 
     orch = build_orchestrator(
-        rules, params, run_cfg, bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=bars_4h, ticks=ticks,
+        rules, params, run_cfg, identity=make_identity(ticks), bars_1m=bars_1m, bars_5m=bars_5m,
+        bars_4h=bars_4h, ticks=ticks,
         spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}), journal=journal,
+        registry_path=registry_path,
     )
     # Deliberately no orch.store.put(...) anywhere -- this is the entire point.
     return orch
@@ -124,13 +126,27 @@ def test_full_pipeline_from_raw_4h_bars_reaches_a_real_fill():
 
 def test_full_pipeline_writes_a_consistent_journal(tmp_path):
     db_path = tmp_path / "test.duckdb"
+    registry_path = tmp_path / "runs.jsonl"
     journal = DuckDBJournal(db_path, SCHEMA_PATH)
-    orch = _scenario(journal=journal)
+    orch = _scenario(journal=journal, registry_path=registry_path)
     orch.run()  # closes `journal`
 
     reader = DuckDBJournal(db_path, SCHEMA_PATH)
     [(setup_id, fvg_id, outcome)] = reader.query("SELECT setup_id, fvg_id, outcome FROM setups")
     assert outcome == "armed"
+
+    # B-1/D-067: runs row carries real identity, not the pre-B-1 "unknown"/0 placeholders.
+    [(config_hash, code_version, data_version, split_type, seed)] = reader.query(
+        "SELECT config_hash, code_version, data_version, split_type, seed FROM runs"
+    )
+    assert "unknown" not in (config_hash, code_version, data_version, split_type)
+    assert seed is None
+    assert registry_path.exists()
+    registry_lines = registry_path.read_text().strip().splitlines()
+    assert len(registry_lines) == 1
+    record = json.loads(registry_lines[0])
+    assert record["config_hash"] == config_hash
+    assert record["seed"] is None
 
     [(trade_id,)] = reader.query("SELECT trade_id FROM trades")
     [(exit_kind, result_r)] = reader.query(

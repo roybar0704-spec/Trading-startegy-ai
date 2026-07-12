@@ -17,10 +17,15 @@ falling back to D1.
 
 from __future__ import annotations
 
+import json
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
 from src.backtest.orchestrator import Orchestrator
 from src.backtest.portfolio_arm import PortfolioArm
-from src.config.models import Parameters, RulesV1, RunConfig
-from src.core.types import ArmId, Bar, NewsEvent, Tick
+from src.config.models import Parameters, RulesV1, RunConfig, config_hash
+from src.core.types import ArmId, Bar, NewsEvent, RunIdentity, Tick
 from src.displacement.d1_body import D1BodyRatio
 from src.displacement.model import DisplacementModel
 from src.entry.m1 import M1EntryModel
@@ -35,6 +40,31 @@ from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 
 _DISPLACEMENT_MODELS: dict[str, type[DisplacementModel]] = {"D1": D1BodyRatio}
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+# Temporary run registry (Stage A / B-1, D-067) -- until T5.5's Experiment Tracker
+# replaces it. data/ is entirely gitignored; only .gitkeep is force-tracked (C3).
+_DEFAULT_REGISTRY_PATH = REPO_ROOT / "data" / "registry" / "runs.jsonl"
+
+
+def detect_code_version() -> str:
+    """Identify the running code from git: ``<sha>`` or ``<sha>+dirty``.
+
+    Fails loudly (``RuntimeError``) rather than falling back silently -- a
+    reproducibility identity that can't be trusted is worse than none (SPEC S13).
+    """
+    try:
+        sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT,
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=REPO_ROOT,
+            capture_output=True, text=True, check=True,
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as exc:
+        raise RuntimeError(f"detect_code_version: git command failed: {exc}") from exc
+    return f"{sha}+dirty" if status.strip() else sha
 
 
 def _displacement_model_and_params(parameters: Parameters) -> tuple[DisplacementModel, dict]:
@@ -109,6 +139,7 @@ def build_orchestrator(
     parameters: Parameters,
     run_config: RunConfig,
     *,
+    identity: RunIdentity,
     bars_1m: list[Bar],
     bars_5m: list[Bar],
     bars_4h: list[Bar],
@@ -117,13 +148,35 @@ def build_orchestrator(
     spread_warmup_ticks: list[Tick] = (),
     journal: DuckDBJournal | None = None,
     run_id: str = "run",
+    registry_path: Path | None = None,
 ) -> Orchestrator:
     """Translate the three loaded config models into a fully-wired Orchestrator.
 
     ``bars_*``/``ticks``/``news``/``spread_warmup_ticks`` remain caller-injected data
     (D-037: engines never read a concrete data source) -- only the *shape* of the run
     (session/blackout/arms/costs/displacement/sizing/equity) comes from config here.
+
+    ``identity`` (Stage A / B-1, D-067, closes KI-018): the caller declares
+    ``data_version``/``split_type``/``seed``; ``config_hash`` is computed here from
+    ``(rules, parameters, run_config, identity.data_version, code_version)`` --
+    a caller-supplied ``config_hash`` is a contract violation. ``code_version``
+    defaults to git auto-detection (``detect_code_version``); an explicit override
+    is for tests only. If ``journal`` is given (already successfully opened by the
+    caller), one JSONL record is appended to ``registry_path`` (default
+    ``data/registry/runs.jsonl``) -- a temporary run registry until T5.5's
+    Experiment Tracker replaces it.
     """
+    if identity.config_hash is not None:
+        raise ValueError(
+            "identity.config_hash is computed internally by build_orchestrator; "
+            "callers must not supply it"
+        )
+    code_version = identity.code_version or detect_code_version()
+    resolved_hash = config_hash(
+        rules, parameters, run_config,
+        data_version=identity.data_version, code_version=code_version,
+    )
+
     session = SessionEngine.from_config(window=rules.session.window, tz=rules.session.tz)
     calendar = CalendarEngine.from_config(
         list(news), currencies=rules.news_filter.currency, impacts=rules.news_filter.impact,
@@ -131,6 +184,15 @@ def build_orchestrator(
         blackout_after_min=rules.news_filter.blackout_min.after,
     )
     displacement_model, displacement_params = _displacement_model_and_params(parameters)
+
+    if journal is not None:
+        _append_registry_record(
+            registry_path=registry_path or _DEFAULT_REGISTRY_PATH, run_id=run_id,
+            config_hash=resolved_hash, code_version=code_version,
+            data_version=identity.data_version, split_type=identity.split_type,
+            seed=identity.seed,
+        )
+
     return Orchestrator(
         bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=bars_4h, ticks=ticks,
         session=session, calendar=calendar,
@@ -142,4 +204,31 @@ def build_orchestrator(
         symbol=rules.instrument,
         spread_warmup_ticks=list(spread_warmup_ticks),
         journal=journal, run_id=run_id,
+        config_hash=resolved_hash, code_version=code_version,
+        data_version=identity.data_version, split_type=identity.split_type,
+        seed=identity.seed,
     )
+
+
+def _append_registry_record(
+    *, registry_path: Path, run_id: str, config_hash: str, code_version: str,
+    data_version: str, split_type: str, seed: int | None,
+) -> None:
+    """Append one append-only JSONL record -- mirrors Orchestrator._write_run_identity_rows'
+    ``experiment_id`` formula (``f"{run_id}-exp"``); this is a log of *declared* run
+    identity, kept independently of whether ``run()`` is later invoked or succeeds.
+    """
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "ts_utc": datetime.now(UTC).isoformat(),
+        "run_id": run_id,
+        "experiment_id": f"{run_id}-exp",
+        "config_hash": config_hash,
+        "code_version": code_version,
+        "data_version": data_version,
+        "split_type": split_type,
+        "seed": seed,
+        "objective_id": "RA-01",
+    }
+    with registry_path.open("a") as f:
+        f.write(json.dumps(record) + "\n")

@@ -8,9 +8,9 @@ import pytest
 
 from src.backtest.run_builder import build_orchestrator
 from src.config.models import load_parameters, load_rules_v1, load_run_config
-from src.core.types import FVG, TF
+from src.core.types import FVG, TF, RunIdentity
 from src.store.state_store import BiasEvent
-from tests.fixtures.orchestrator import IN_WINDOW, SEED_TS, warmup_ticks
+from tests.fixtures.orchestrator import IN_WINDOW, SEED_TS, make_identity, warmup_ticks
 from tests.fixtures.setup_stream import m1, m5
 
 TOP, BOTTOM = 100.0, 95.0
@@ -20,11 +20,12 @@ def _rules_params_run():
     return load_rules_v1(), load_parameters(), load_run_config()
 
 
-def test_build_orchestrator_wires_all_9_declared_arms():
+def test_build_orchestrator_wires_all_9_declared_arms(tmp_path):
     rules, params, run_cfg = _rules_params_run()
     orch = build_orchestrator(
-        rules, params, run_cfg, bars_1m=[], bars_5m=[], bars_4h=[], ticks=[],
-        spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        rules, params, run_cfg, identity=make_identity(), bars_1m=[], bars_5m=[],
+        bars_4h=[], ticks=[], spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        registry_path=tmp_path / "runs.jsonl",
     )
     assert len(orch.arms) == 9
     pairs = {(a.arm_id.entry, a.arm_id.sl_anchor) for a in orch.arms}
@@ -34,11 +35,12 @@ def test_build_orchestrator_wires_all_9_declared_arms():
     assert orch.symbol == "XAUUSD"
 
 
-def test_build_orchestrator_matches_declared_config_values():
+def test_build_orchestrator_matches_declared_config_values(tmp_path):
     rules, params, run_cfg = _rules_params_run()
     orch = build_orchestrator(
-        rules, params, run_cfg, bars_1m=[], bars_5m=[], bars_4h=[], ticks=[],
-        spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        rules, params, run_cfg, identity=make_identity(), bars_1m=[], bars_5m=[],
+        bars_4h=[], ticks=[], spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        registry_path=tmp_path / "runs.jsonl",
     )
     for arm in orch.arms:
         assert arm.portfolio.initial_equity == pytest.approx(10_000.0)  # RA-28
@@ -65,11 +67,26 @@ def test_build_orchestrator_rejects_undeclared_displacement_model():
     )
     with pytest.raises(NotImplementedError):
         build_orchestrator(
-            rules, bad_params, run_cfg, bars_1m=[], bars_5m=[], bars_4h=[], ticks=[],
+            rules, bad_params, run_cfg, identity=make_identity(),
+            bars_1m=[], bars_5m=[], bars_4h=[], ticks=[],
         )
 
 
-def test_build_orchestrator_runs_end_to_end_from_real_config():
+def test_build_orchestrator_rejects_caller_supplied_config_hash():
+    rules, params, run_cfg = _rules_params_run()
+    ok_identity = make_identity()
+    bad_identity = RunIdentity(
+        data_version=ok_identity.data_version, split_type=ok_identity.split_type,
+        code_version=ok_identity.code_version, config_hash="not-allowed",
+    )
+    with pytest.raises(ValueError):
+        build_orchestrator(
+            rules, params, run_cfg, identity=bad_identity,
+            bars_1m=[], bars_5m=[], bars_4h=[], ticks=[],
+        )
+
+
+def test_build_orchestrator_runs_end_to_end_from_real_config(tmp_path):
     rules, params, run_cfg = _rules_params_run()
     r_ts = IN_WINDOW + timedelta(minutes=5)
     s_ts = IN_WINDOW + timedelta(minutes=10)
@@ -84,8 +101,9 @@ def test_build_orchestrator_runs_end_to_end_from_real_config():
     bars_5m = [m5(r_ts, 99.0, 99.8, 97.0, 99.5), m5(s_ts, 98.0, 98.5, 96.0, 97.5)]
 
     orch = build_orchestrator(
-        rules, params, run_cfg, bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=[], ticks=[],
-        spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        rules, params, run_cfg, identity=make_identity(), bars_1m=bars_1m, bars_5m=bars_5m,
+        bars_4h=[], ticks=[], spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        registry_path=tmp_path / "runs.jsonl",
     )
     orch.store.put(
         FVG(

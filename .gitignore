@@ -1,4 +1,9 @@
-/data/
+/data/*
+# B-1/D-067/C3: keep the run registry directory in git (runs.jsonl itself stays
+# untracked -- it's a local, append-only log, not a versioned artifact).
+!/data/registry
+/data/registry/*
+!/data/registry/.gitkeep
 benchmarks/_scratch_ticks/
 *.parquet
 *.duckdb

@@ -5,7 +5,8 @@ from zoneinfo import ZoneInfo
 
 from src.backtest.orchestrator import Orchestrator
 from src.backtest.portfolio_arm import PortfolioArm
-from src.core.types import FVG, TF, ArmId, Tick
+from src.core.types import FVG, TF, ArmId, RunIdentity, Tick
+from src.data.versioning import data_version_for_ticks
 from src.displacement.d1_body import D1_DEFAULT_PARAMS, D1BodyRatio
 from src.entry.m1 import M1EntryModel
 from src.entry.m2 import M2EntryModel
@@ -17,6 +18,22 @@ from src.risk.portfolio import Portfolio
 from src.session.calendar_engine import CalendarEngine
 from src.session.session_engine import SessionEngine
 from src.store.state_store import BiasEvent
+
+# Fixed override (Stage A / B-1, WORK_ORDER_B1.md S4 Commit 3) -- tests never
+# depend on git state for code_version.
+TEST_CODE_VERSION = "b1-test-fixed-sha"
+
+
+def make_identity(ticks=(), split_type: str = "fixture") -> RunIdentity:
+    """RunIdentity for tests: data_version derived from the fixture's own ticks
+    (D-037: even a synthetic/fixture run gets a real data_version); code_version
+    fixed so tests never depend on git state.
+    """
+    return RunIdentity(
+        data_version=data_version_for_ticks(list(ticks)),
+        split_type=split_type,
+        code_version=TEST_CODE_VERSION,
+    )
 
 SESSION = SessionEngine.from_config(window=("08:30", "10:30"), tz="America/New_York")
 NO_BLACKOUT = CalendarEngine.from_config(

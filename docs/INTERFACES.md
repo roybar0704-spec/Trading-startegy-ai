@@ -58,6 +58,16 @@ class OrderIntent: setup_id: str; arm: ArmId; side: Side
 @dataclass(frozen=True)
 class ArmId: entry: Literal["M1","M2","M4"]
              sl_anchor: Literal["R_body","S_body","S_wick"]
+
+@dataclass(frozen=True)
+class RunIdentity:                       # Stage A / B-1, D-067, סוגר KI-018
+    data_version: str
+    split_type: Literal["in_sample","walk_forward_train","walk_forward_test",
+                         "holdout","baseline","fixture"]
+    seed: int | None = None              # None = ריצת מנוע (נטול-RNG); לא-None = Baseline
+    code_version: str | None = None      # None => זיהוי אוטומטי מ-git (build_orchestrator)
+    config_hash: str | None = None       # חייב להישאר None -- מחושב פנימית ב-build_orchestrator;
+                                          # ערך מסופק ⇒ ValueError
 ```
 
 ## Data Layer
@@ -145,8 +155,14 @@ class Orchestrator:
 # Orchestrator קורה כאן, במקום אחד -- לא ידנית אצל כל קורא. חתימה:
 def build_orchestrator(
     rules: RulesV1, parameters: Parameters, run_config: RunConfig, *,
+    identity: RunIdentity,               # Stage A / B-1, D-067: config_hash מחושב כאן
+                                          # מ-(rules,parameters,run_config,identity.data_version,
+                                          # code_version); identity.config_hash != None ⇒ ValueError.
+                                          # code_version = identity.code_version או detect_code_version().
     bars_1m, bars_5m, bars_4h, ticks, news=(), spread_warmup_ticks=(),
     journal=None, run_id="run",
+    registry_path: Path | None = None,   # ברירת מחדל data/registry/runs.jsonl (זמני עד T5.5);
+                                          # רשומה נוספת רק אם journal is not None
 ) -> Orchestrator: ...
 
 class Journal(Protocol):

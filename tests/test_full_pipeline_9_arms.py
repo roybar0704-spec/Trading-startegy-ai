@@ -10,7 +10,7 @@ from src.backtest.run_builder import build_orchestrator
 from src.config.models import load_parameters, load_rules_v1, load_run_config
 from src.core.types import FVG, TF, Tick
 from src.store.state_store import BiasEvent
-from tests.fixtures.orchestrator import IN_WINDOW, SEED_TS, warmup_ticks
+from tests.fixtures.orchestrator import IN_WINDOW, SEED_TS, make_identity, warmup_ticks
 from tests.fixtures.setup_stream import m1, m5
 
 
@@ -49,8 +49,8 @@ def _scenario():
         Tick(ts=rejection_close_ts + timedelta(minutes=10), bid=101.0, ask=101.1),  # TP for all
     ]
     orch = build_orchestrator(
-        rules, params, run_cfg, bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=[], ticks=ticks,
-        spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
+        rules, params, run_cfg, identity=make_identity(ticks), bars_1m=bars_1m, bars_5m=bars_5m,
+        bars_4h=[], ticks=ticks, spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}),
     )
     orch.store.put(
         FVG(

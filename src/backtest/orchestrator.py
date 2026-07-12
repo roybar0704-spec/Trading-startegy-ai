@@ -88,6 +88,16 @@ class Orchestrator:
     spread_warmup_ticks: list[Tick] = field(default_factory=list)
     journal: DuckDBJournal | None = None
     run_id: str = "run"
+    # Run identity (Stage A / B-1, D-067, closes KI-018): plain injected values --
+    # this Orchestrator never computes them (D-037 data/config-agnostic); real
+    # resolution (config_hash(), git detection) lives in run_builder only. Defaults
+    # preserve the pre-B-1 KI-018 placeholder behavior for any caller that builds
+    # an Orchestrator directly, bypassing build_orchestrator (e.g. tests/fixtures).
+    config_hash: str = "unknown"
+    code_version: str = "unknown"
+    data_version: str = "unknown"
+    split_type: str = "unknown"
+    seed: int | None = None
 
     store: StateStore = field(init=False)
     structure_4h: StructureEngine = field(init=False)
@@ -126,13 +136,15 @@ class Orchestrator:
     def _write_run_identity_rows(self) -> None:
         """Write experiments/runs/portfolios once, before anything that FKs to them.
 
-        KI-018 (partial): config_hash/code_version/data_version/split_type/seed are
-        not knowable to this data/config-agnostic Orchestrator (D-037) -- clearly
-        marked placeholders are used; real values require run_builder/config_hash()
-        wiring, which this class deliberately doesn't own. Without this method,
-        *nothing* referencing portfolios/runs/experiments could ever be journaled --
-        found while testing T3.6 against real FK constraints for the first time
-        (D-059): setups/portfolios/runs/experiments had never actually been written.
+        KI-018 (closed, D-067): config_hash/code_version/data_version/split_type/seed
+        are not computed here -- this Orchestrator stays data/config-agnostic
+        (D-037); real resolution happens in run_builder (build_orchestrator), which
+        passes the resolved values in as plain fields (self.config_hash etc.,
+        defaulting to the pre-B-1 "unknown"/None placeholders for any caller that
+        builds an Orchestrator directly). Without this method, *nothing* referencing
+        portfolios/runs/experiments could ever be journaled -- found while testing
+        T3.6 against real FK constraints for the first time (D-059):
+        setups/portfolios/runs/experiments had never actually been written.
         """
         if self.journal is None:
             return
@@ -161,9 +173,9 @@ class Orchestrator:
             "runs",
             {
                 "run_id": self.run_id, "experiment_id": experiment_id,
-                "config_hash": "unknown", "code_version": "unknown",
-                "data_version": "unknown", "period_start": period_start,
-                "period_end": period_end, "split_type": "unknown", "seed": 0,
+                "config_hash": self.config_hash, "code_version": self.code_version,
+                "data_version": self.data_version, "period_start": period_start,
+                "period_end": period_end, "split_type": self.split_type, "seed": self.seed,
                 "created_at": created_at,
             },
         )
