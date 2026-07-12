@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS runs (
     period_start    DATE NOT NULL,
     period_end      DATE NOT NULL,
     split_type      TEXT NOT NULL,          -- in_sample | wf_train | wf_test | holdout
-    seed            BIGINT NOT NULL,
+    seed            BIGINT,                 -- NULL = engine run (RNG-free, D-067); NOT NULL = baseline run (Phase 5)
     created_at      TIMESTAMPTZ NOT NULL
 );
 
