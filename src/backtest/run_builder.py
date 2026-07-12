@@ -42,7 +42,7 @@ from src.session.session_engine import SessionEngine
 _DISPLACEMENT_MODELS: dict[str, type[DisplacementModel]] = {"D1": D1BodyRatio}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-# Temporary run registry (Stage A / B-1, D-067) -- until T5.5's Experiment Tracker
+# Temporary run registry (Stage A / B-1, D-068) -- until T5.5's Experiment Tracker
 # replaces it. data/ is entirely gitignored; only .gitkeep is force-tracked (C3).
 _DEFAULT_REGISTRY_PATH = REPO_ROOT / "data" / "registry" / "runs.jsonl"
 
@@ -156,7 +156,7 @@ def build_orchestrator(
     (D-037: engines never read a concrete data source) -- only the *shape* of the run
     (session/blackout/arms/costs/displacement/sizing/equity) comes from config here.
 
-    ``identity`` (Stage A / B-1, D-067, closes KI-018): the caller declares
+    ``identity`` (Stage A / B-1, D-068, closes KI-018): the caller declares
     ``data_version``/``split_type``/``seed``; ``config_hash`` is computed here from
     ``(rules, parameters, run_config, identity.data_version, code_version)`` --
     a caller-supplied ``config_hash`` is a contract violation. ``code_version``

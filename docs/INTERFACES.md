@@ -60,7 +60,7 @@ class ArmId: entry: Literal["M1","M2","M4"]
              sl_anchor: Literal["R_body","S_body","S_wick"]
 
 @dataclass(frozen=True)
-class RunIdentity:                       # Stage A / B-1, D-067, סוגר KI-018
+class RunIdentity:                       # Stage A / B-1, D-068, סוגר KI-018
     data_version: str
     split_type: Literal["in_sample","walk_forward_train","walk_forward_test",
                          "holdout","baseline","fixture"]
@@ -155,7 +155,7 @@ class Orchestrator:
 # Orchestrator קורה כאן, במקום אחד -- לא ידנית אצל כל קורא. חתימה:
 def build_orchestrator(
     rules: RulesV1, parameters: Parameters, run_config: RunConfig, *,
-    identity: RunIdentity,               # Stage A / B-1, D-067: config_hash מחושב כאן
+    identity: RunIdentity,               # Stage A / B-1, D-068: config_hash מחושב כאן
                                           # מ-(rules,parameters,run_config,identity.data_version,
                                           # code_version); identity.config_hash != None ⇒ ValueError.
                                           # code_version = identity.code_version או detect_code_version().

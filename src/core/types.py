@@ -231,10 +231,10 @@ class SetupEvent:
 
 @dataclass(frozen=True)
 class RunIdentity:
-    """A run's declared identity (Stage A / B-1, closes KI-018; docs/SPEC_V1_FROZEN.md §13).
+    """A run's declared identity (Stage A / B-1, D-068, closes KI-018; SPEC_V1_FROZEN.md §13).
 
     ``config_hash`` must stay ``None`` here -- ``run_builder`` computes it internally
-    from ``(rules, parameters, run_config)`` via ``config_hash()`` (D-067); a caller
+    from ``(rules, parameters, run_config)`` via ``config_hash()`` (D-068); a caller
     supplying a value is a contract violation (``ValueError``). ``code_version``
     left ``None`` means auto-detect from git (``<sha>`` or ``<sha>+dirty``); an
     explicit value is for tests only. ``seed=None`` is the RNG-free-engine

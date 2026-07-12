@@ -88,7 +88,7 @@ class Orchestrator:
     spread_warmup_ticks: list[Tick] = field(default_factory=list)
     journal: DuckDBJournal | None = None
     run_id: str = "run"
-    # Run identity (Stage A / B-1, D-067, closes KI-018): plain injected values --
+    # Run identity (Stage A / B-1, D-068, closes KI-018): plain injected values --
     # this Orchestrator never computes them (D-037 data/config-agnostic); real
     # resolution (config_hash(), git detection) lives in run_builder only. Defaults
     # preserve the pre-B-1 KI-018 placeholder behavior for any caller that builds
@@ -136,7 +136,7 @@ class Orchestrator:
     def _write_run_identity_rows(self) -> None:
         """Write experiments/runs/portfolios once, before anything that FKs to them.
 
-        KI-018 (closed, D-067): config_hash/code_version/data_version/split_type/seed
+        KI-018 (closed, D-068): config_hash/code_version/data_version/split_type/seed
         are not computed here -- this Orchestrator stays data/config-agnostic
         (D-037); real resolution happens in run_builder (build_orchestrator), which
         passes the resolved values in as plain fields (self.config_hash etc.,
