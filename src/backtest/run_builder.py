@@ -214,9 +214,11 @@ def _append_registry_record(
     *, registry_path: Path, run_id: str, config_hash: str, code_version: str,
     data_version: str, split_type: str, seed: int | None,
 ) -> None:
-    """Append one append-only JSONL record -- mirrors Orchestrator._write_run_identity_rows'
-    ``experiment_id`` formula (``f"{run_id}-exp"``); this is a log of *declared* run
-    identity, kept independently of whether ``run()`` is later invoked or succeeds.
+    """Append one append-only JSONL record.
+
+    Mirrors ``Orchestrator._write_run_identity_rows``' ``experiment_id`` formula
+    (``f"{run_id}-exp"``); this is a log of *declared* run identity, kept
+    independently of whether ``run()`` is later invoked or succeeds.
     """
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     record = {

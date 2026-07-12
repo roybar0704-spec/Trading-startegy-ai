@@ -17,10 +17,19 @@ never asserted into existence.
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import NamedTuple
 
+from src.backtest.orchestrator import Orchestrator
 from src.backtest.run_builder import build_orchestrator
-from src.config.models import load_parameters, load_rules_v1, load_run_config
-from src.core.types import TF, Bar, Tick
+from src.config.models import (
+    Parameters,
+    RulesV1,
+    RunConfig,
+    load_parameters,
+    load_rules_v1,
+    load_run_config,
+)
+from src.core.types import TF, Bar, RunIdentity, Tick
 from src.journal.duckdb_writer import DuckDBJournal
 from tests.fixtures.orchestrator import make_identity, warmup_ticks
 from tests.fixtures.setup_stream import m1, m5
@@ -55,7 +64,17 @@ def _raw_4h_bars() -> list[Bar]:
     ]
 
 
-def _scenario(journal=None, registry_path=None):
+class Scenario(NamedTuple):
+    """Everything AT-3.14 needs to independently recompute config_hash()."""
+
+    orch: Orchestrator
+    rules: RulesV1
+    parameters: Parameters
+    run_config: RunConfig
+    identity: RunIdentity
+
+
+def _scenario(journal=None, registry_path=None) -> Scenario:
     rules, params, run_cfg = load_rules_v1(), load_parameters(), load_run_config()
     # Tiny geometry threshold -- real geometry is covered elsewhere (test_at2_6);
     # the point of this test is the wiring from raw bars to a Journal-recorded trade.
@@ -88,18 +107,21 @@ def _scenario(journal=None, registry_path=None):
         Tick(ts=inversion_ts + timedelta(minutes=5), bid=121.0, ask=121.1),  # TP exit
     ]
 
+    identity = make_identity(ticks)
     orch = build_orchestrator(
-        rules, params, run_cfg, identity=make_identity(ticks), bars_1m=bars_1m, bars_5m=bars_5m,
+        rules, params, run_cfg, identity=identity, bars_1m=bars_1m, bars_5m=bars_5m,
         bars_4h=bars_4h, ticks=ticks,
         spread_warmup_ticks=warmup_ticks({h: 0.01 for h in range(24)}), journal=journal,
         registry_path=registry_path,
     )
     # Deliberately no orch.store.put(...) anywhere -- this is the entire point.
-    return orch
+    return Scenario(
+        orch=orch, rules=rules, parameters=params, run_config=run_cfg, identity=identity,
+    )
 
 
 def test_bias_and_fvg_are_genuinely_detected_not_seeded():
-    orch = _scenario()
+    orch = _scenario().orch
     orch.run()
     last_4h_ts = orch.bars_4h[-1].close_ts
 
@@ -109,7 +131,7 @@ def test_bias_and_fvg_are_genuinely_detected_not_seeded():
 
 
 def test_full_pipeline_from_raw_4h_bars_reaches_a_real_fill():
-    orch = _scenario()
+    orch = _scenario().orch
     result = orch.run()
 
     assert result.engaged == 1
@@ -128,7 +150,7 @@ def test_full_pipeline_writes_a_consistent_journal(tmp_path):
     db_path = tmp_path / "test.duckdb"
     registry_path = tmp_path / "runs.jsonl"
     journal = DuckDBJournal(db_path, SCHEMA_PATH)
-    orch = _scenario(journal=journal, registry_path=registry_path)
+    orch = _scenario(journal=journal, registry_path=registry_path).orch
     orch.run()  # closes `journal`
 
     reader = DuckDBJournal(db_path, SCHEMA_PATH)
