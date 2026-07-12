@@ -227,3 +227,25 @@ class SetupEvent:
     ifvg: IFVG | None = None
     post_arm: bool = False  # True: setups.outcome already 'armed' -- cancel pending orders only
     inversion_close: float | None = None  # "armed" only: the Inversion candle's close (M2/M4)
+
+
+@dataclass(frozen=True)
+class RunIdentity:
+    """A run's declared identity (Stage A / B-1, closes KI-018; docs/SPEC_V1_FROZEN.md §13).
+
+    ``config_hash`` must stay ``None`` here -- ``run_builder`` computes it internally
+    from ``(rules, parameters, run_config)`` via ``config_hash()`` (D-067); a caller
+    supplying a value is a contract violation (``ValueError``). ``code_version``
+    left ``None`` means auto-detect from git (``<sha>`` or ``<sha>+dirty``); an
+    explicit value is for tests only. ``seed=None`` is the RNG-free-engine
+    invariant (D-067): future randomness must consume ``runs.seed`` instead.
+    """
+
+    data_version: str
+    split_type: Literal[
+        "in_sample", "walk_forward_train", "walk_forward_test",
+        "holdout", "baseline", "fixture",
+    ]
+    seed: int | None = None
+    code_version: str | None = None
+    config_hash: str | None = None
