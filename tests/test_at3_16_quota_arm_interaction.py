@@ -73,21 +73,35 @@ def _zone_bars(t0, price_offset):
 def _scenario(journal=None):
     """One portfolio (M2/S_wick); 3 separate Setups (distinct FVG zones) all reach
     ARMED on this same portfolio, same NY trading day. Only the first two zones get
-    a fill tick -- quota decrements on fill (not approval), so by the time zone 3
-    arms, the day's 2-fill quota is exhausted only if zones 1 and 2 actually filled.
+    an entry-fill tick -- quota decrements on fill (not approval), so by the time
+    zone 3 arms, the day's 2-fill quota is exhausted only if zones 1 and 2 actually
+    filled. Zones 1 and 2 also get a prompt TP-exit tick (~3R above entry, same
+    margin test_orchestrator.py's _happy_path_bars already uses) so each position
+    closes cleanly *before* the next zone's bars begin -- otherwise a still-open
+    position from an earlier zone would see the next zone's necessarily-different
+    price as a later, unrelated tick, which FillSimulator correctly (if
+    surprisingly, for a same-run multi-zone synthetic fixture) reads as a
+    Gap-Through SL/TP hit against the wrong zone's tiny geometry thresholds.
     """
     arm = make_arm("M2", "S_wick")
     all_bars_1m, all_bars_5m, ticks = [], [], []
-    for zone_idx, (price_offset, start_min) in enumerate(zip(ZONE_OFFSETS, ZONE_START_OFFSETS_MIN)):
+    zones = zip(ZONE_OFFSETS, ZONE_START_OFFSETS_MIN, strict=True)
+    for zone_idx, (price_offset, start_min) in enumerate(zones):
         t0 = IN_WINDOW + timedelta(minutes=start_min)
         bars_1m, bars_5m, inversion_ts = _zone_bars(t0, price_offset)
         all_bars_1m.extend(bars_1m)
         all_bars_5m.extend(bars_5m)
-        if zone_idx < 2:  # only zones 1 and 2 get a fill tick
+        if zone_idx < 2:  # only zones 1 and 2 get entry + exit ticks
             ticks.append(
                 Tick(
                     ts=inversion_ts + timedelta(seconds=1),
                     bid=100.0 + price_offset, ask=100.05 + price_offset,
+                )
+            )
+            ticks.append(
+                Tick(
+                    ts=inversion_ts + timedelta(seconds=30),
+                    bid=101.0 + price_offset, ask=101.1 + price_offset,
                 )
             )
 
