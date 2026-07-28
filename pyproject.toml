@@ -13,6 +13,8 @@ dependencies = [
     "plotly>=5.24",
     "tzdata>=2024.2",
     "pytz>=2024.2",  # duckdb's Python client needs this to fetch TIMESTAMPTZ columns
+    "httpx>=0.27",  # KI-001: browser-like transport (src/data/browser_transport.py) needs HTTP/2
+    "h2>=4.1",  # httpx's HTTP/2 support requires this explicitly (ImportError otherwise)
 ]
 
 [project.optional-dependencies]

@@ -63,13 +63,15 @@ import urllib.error
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.data.browser_transport import BrowserLikeTransport  # noqa: E402
 from src.data.dukascopy_downloader import (  # noqa: E402
     DukascopyDownloader,
     DukascopyFetchError,
     Transport,
-    _default_transport,
 )
 from src.data.tick_store import (  # noqa: E402
     TickParquetStore,
@@ -125,7 +127,9 @@ class PacedLoggingTransport:
             return body
         except Exception as exc:  # noqa: BLE001 - logged, then re-raised for the downloader's own retry
             self.total_errors += 1
-            is_429 = isinstance(exc, urllib.error.HTTPError) and exc.code == 429
+            is_429 = (isinstance(exc, urllib.error.HTTPError) and exc.code == 429) or (
+                isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 429
+            )
             if is_429:
                 self.total_429 += 1
             self._log(
@@ -326,23 +330,34 @@ def main() -> int:
         print("\n--dry-run: no network access performed.")
         return 0
 
-    transport = PacedLoggingTransport(_default_transport, args.pacing_seconds, requests_log)
-    downloader = DukascopyDownloader(
-        cache_dir=Path(args.raw_cache_dir),
-        transport=transport,
-        max_retries=args.max_retries,
-        backoff_seconds=args.backoff_seconds,
-    )
-    store = TickParquetStore(Path(args.ticks_dir))
-
-    succeeded, failed = 0, 0
-    for y, m in pending:
-        ok = process_month(
-            downloader, store, checkpoint, args.symbol, y, m, start, end,
-            args.month_retry_limit, args.month_retry_cooldown_seconds,
+    # BrowserLikeTransport opens one persistent HTTP/2 client here, before the
+    # per-month loop starts, and is closed exactly once in the `finally` below,
+    # only after every month in `pending` has been fully processed (each
+    # month's own write/flush to TickParquetStore already completes -- inside
+    # process_month, synchronously -- before the loop advances to the next
+    # month or exits). Checkpoint/cache/retry/pacing logic below is otherwise
+    # untouched -- only which transport PacedLoggingTransport wraps changed.
+    inner_transport = BrowserLikeTransport()
+    try:
+        transport = PacedLoggingTransport(inner_transport, args.pacing_seconds, requests_log)
+        downloader = DukascopyDownloader(
+            cache_dir=Path(args.raw_cache_dir),
+            transport=transport,
+            max_retries=args.max_retries,
+            backoff_seconds=args.backoff_seconds,
         )
-        succeeded += int(ok)
-        failed += int(not ok)
+        store = TickParquetStore(Path(args.ticks_dir))
+
+        succeeded, failed = 0, 0
+        for y, m in pending:
+            ok = process_month(
+                downloader, store, checkpoint, args.symbol, y, m, start, end,
+                args.month_retry_limit, args.month_retry_cooldown_seconds,
+            )
+            succeeded += int(ok)
+            failed += int(not ok)
+    finally:
+        inner_transport.close()
 
     log(
         f"=== BACKFILL RUN COMPLETE === months_succeeded={succeeded} months_failed={failed} "
