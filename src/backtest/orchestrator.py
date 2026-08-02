@@ -228,6 +228,17 @@ class Orchestrator:
                 elif event.kind in ("invalidated", "expired", "no_ifvg"):
                     if not event.post_arm:
                         self._finalize_setup_journal(event.setup_id, ts)
+                    # Every EntryModel must see terminal/post-arm-cancel events too, not
+                    # just "armed" -- M4EntryModel.on_event's own docstring already says
+                    # "stop watching on any terminal/post-arm-cancel event", but until now
+                    # nothing ever called on_event for this branch, so a Setup invalidated
+                    # post-arm (e.g. S-low-break) left M4._watching holding a setup_id that
+                    # later fell out of both _active and _finished -- KeyError crash on the
+                    # next unrelated Setup's qualifying rejection candle (found by AT-3.16,
+                    # B-2 Commit 2). M1/M2.on_event already no-op on non-armed events, so
+                    # this is a pure cleanup call, never gated on in_window/in_blackout
+                    # (unlike the armed branch above, which gates *new* orders only).
+                    self._open_orders_for_event(event, ctx, result)
                     self._cancel_for_setup(ts, event.setup_id, event.kind, result)
 
             was_in_window, was_in_blackout = in_window, in_blackout
