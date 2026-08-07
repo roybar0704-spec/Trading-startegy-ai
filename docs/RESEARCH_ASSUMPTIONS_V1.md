@@ -25,7 +25,7 @@
 
 | ID | הנחה + ערך v1 | נימוק | Config |
 |---|---|---|---|
-| RA-10 | Slippage יציאת Stop: ‏0.10$ | הערכה שמרנית ראשונית; **יכויל מחדש מול דו"ח הספרד של Phase 0** | `costs.slippage_stop_usd` |
+| RA-10 | Slippage יציאת Stop: ‏0.70$ (מכויל, B-4/D-074) | **Proxy שמרני, לא מדידה ישירה של Slippage בפועל:** p95 של התפלגות-Spread אמיתית ב-XAUUSD על פני 33 חודשים (2022-10–2025-06, `scripts/diagnostics/run_full_spread_report.py`) — 137,407,787 Ticks אמיתיים. אימות-Slippage ישיר (מדידת מילוי-Stop בפועל, לא Spread) נשאר עבודה עתידית, לא בוצע כאן. | `costs.slippage_stop_usd` |
 | RA-11 | מכפיל Slippage בחלון חדשות: ×3 | ספייקים בזהב סביב פרסומים | `costs.news_slip_mult` |
 | RA-12 | Slippage כניסת Market: ‏0.05$ | כניסה בשוק רגוע < יציאת Stop | `costs.slippage_market_usd` |
 | RA-13 | Commission: ‏0 | תלוי-ברוקר; ייקבע כשיוגדר ברוקר יעד | `costs.commission_per_unit` |
