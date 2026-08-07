@@ -4,6 +4,11 @@
 !/data/registry
 /data/registry/*
 !/data/registry/.gitkeep
+# B-7/KI-010: real economic-calendar CSV -- small, manually-compiled research
+# artifact with no automated re-fetch pipeline (source blocked from Sandbox),
+# feeds CalendarEngine/FillSimulator decisions directly -- tracked for
+# reproducibility, unlike bulk tick data above.
+!/data/news
 benchmarks/_scratch_ticks/
 *.parquet
 *.duckdb
