@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import polars as pl
 
 DEFAULT_GAP_THRESHOLD = timedelta(minutes=5)
-DEFAULT_SPIKE_Z_THRESHOLD = 8.0
+DEFAULT_SPIKE_Z_THRESHOLD = 12.0  # RA-29 (B-6/D-076); calibrated from the original 8.0
 WEEKEND_CLOSE_WEEKDAY = 4  # Friday
 WEEKEND_CLOSE_HOUR_UTC = 21
 WEEKEND_OPEN_WEEKDAY = 6  # Sunday

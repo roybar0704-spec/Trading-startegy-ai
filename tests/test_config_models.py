@@ -19,6 +19,7 @@ def test_real_config_files_load_cleanly():
     run_cfg = load_run_config()
     assert rules.instrument == "XAUUSD"
     assert params.warmup_days == 90
+    assert params.validator.spike_z_threshold.default == 12.0
     assert run_cfg.arms.entry_models == ("M1", "M2", "M4")
 
 

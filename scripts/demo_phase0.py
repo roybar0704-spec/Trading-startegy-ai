@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import polars as pl
 
 from src.config.frozen_guard import verify_frozen_rules
+from src.config.models import load_parameters
 from src.core.types import TF
 from src.data.bar_builder import BarBuilder
 from src.data.dukascopy_downloader import DukascopyDownloader, DukascopyFetchError
@@ -96,12 +97,16 @@ def main() -> None:
     print("== frozen config integrity ==")
     print("rules_v1.yaml hash:", verify_frozen_rules())
 
+    parameters = load_parameters()
+    spike_z_threshold = parameters.validator.spike_z_threshold.default
+    print(f"validator.spike_z_threshold (from config/parameters.yaml, RA-29): {spike_z_threshold}")
+
     print(f"\n== loading {args.symbol} {args.month} ==")
     ticks = load_month(args.symbol, year, month)
     print(f"tick count: {ticks.height:,}")
 
     print("\n== validation report ==")
-    report = Validator().validate(ticks, args.symbol)
+    report = Validator(spike_z_threshold=spike_z_threshold).validate(ticks, args.symbol)
     print(f"flagged (non-weekend) gaps: {len(report.flagged_gaps)}")
     print(f"weekend gaps (expected, not flagged): {len(report.weekend_gaps)}")
     print(f"spikes flagged: {len(report.spikes)}")

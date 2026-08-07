@@ -13,3 +13,5 @@ warmup_days: 90
 tick_on_demand_band_usd: 1.00         # מרחק הפעלת רזולוציית Tick סביב SL/TP/גבול FVG
 scoring_weights: {fvg_level: 0.4, ts: 0.2, sweep_quality: 0.2, bias_recency: 0.2}
 initial_equity_usd: 10000.0           # RA-28; אינו משפיע על איתותים/R-multiples (Sizing % מהיתרה הממומשת)
+validator:
+  spike_z_threshold: {default: 12.0}  # RA-29 (B-6/D-076); מכויל מ-8.0 המקורי

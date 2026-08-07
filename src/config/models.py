@@ -227,6 +227,12 @@ class ScoringWeights(_Strict):
     bias_recency: float
 
 
+class ValidatorParams(_Strict):
+    """Tick-stream validator thresholds (RA-29, B-6/D-076)."""
+
+    spike_z_threshold: CostDefault
+
+
 class Parameters(_Strict):
     """Mirrors config/parameters.yaml -- declared parameters and Grids."""
 
@@ -238,6 +244,7 @@ class Parameters(_Strict):
     tick_on_demand_band_usd: float
     scoring_weights: ScoringWeights
     initial_equity_usd: float
+    validator: ValidatorParams
 
 
 # ---- RunConfig (config/run_default.yaml) -------------------------------
