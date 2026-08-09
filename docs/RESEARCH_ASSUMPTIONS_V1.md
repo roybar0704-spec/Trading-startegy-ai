@@ -53,7 +53,7 @@
 |---|---|---|
 | RA-21 | עוגן נרות 4H: NY-Close (17:00 ET) | ⚠️ **שינוי משנה אילו FVG קיימים בכלל** — החלפה אינה סוויץ' פרמטר אלא Experiment מלא חדש. הוצג ואומץ כי זו הקונבנציה שסוחרי SMC רואים בגרפים |
 | RA-22 | בסיס הון ל-Sizing: יתרה ממומשת (ללא PnL צף) | משנה גדלי פוזיציה, לא איתותים; שמרני ושחזורי |
-| RA-23 | לוח חדשות: CSV היסטורי, סיווג "אדום", USD בלבד | רשימת האירועים הסופית תקובע אחרי בדיקת זמינות המקור ב-Phase 0 ותובא לאישור |
+| RA-23 | לוח חדשות: CSV היסטורי, סיווג "אדום", USD בלבד — מקור סופי: **BLS** (ממשלתי, Public Domain, `KI010_DECISION_DOC.md` §2-3). **Phase 1 (B-7/D-077):** CPI + Employment Situation (NFP) בלבד, `2022-10-07`…`2025-06-11` (66 אירועים אמיתיים, 33 חודשים) | ⚠️ **Coverage חלקי מוצהר, לא מלא.** מכסה 2 מתוך 7 סוגי-אירוע High-Impact-USD המוכרים בקונצנזוס-שוק (`KI010_DECISION_DOC.md` §3: NFP, CPI, Core PCE, GDP, FOMC Rate Decision, ISM PMI, Retail Sales — 5 חסרים). `docs/SPEC_V1_FROZEN.md` שורה 67 מגדיר Blackout סביב "חדשות אדומות USD" באופן גנרי, לא מוגבל-לסוג-אירוע — Backtest שירוץ על דאטה זה **לא** יחסום סביב FOMC/GDP/Core PCE/ISM/Retail Sales אמיתיים. Pipeline (Data Contract/Loader/CalendarEngine Integration) מוכח במלואו ואינו תלוי בפער הזה. Follow-up: B-8 (הרחבת Coverage) |
 
 ---
 
