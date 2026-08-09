@@ -1,0 +1,9 @@
+# CLAUDE.md Prime Directive 1 + src/config/frozen_guard.py: rules_v1.yaml is
+# verified via raw-byte SHA256 (compute_hash() -- hashlib.sha256(path.read_bytes())),
+# not a parsed/normalized comparison. A Windows checkout converting LF -> CRLF
+# changes those exact bytes without changing the file's logical content,
+# producing a false FrozenConfigTampered failure. Diagnosed (B-8): the Sandbox
+# blob/working-tree SHA256 already matches the frozen hash; simulating a
+# CRLF conversion on that exact content reproduces the mismatched hash exactly.
+config/rules_v1.yaml text eol=lf
+config/rules_v1.yaml.sha256 text eol=lf
