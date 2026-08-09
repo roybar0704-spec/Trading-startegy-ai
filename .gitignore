@@ -23,3 +23,6 @@ htmlcov/
 dist/
 build/
 .env
+
+*_dump.txt
+full_gaps_export.json
