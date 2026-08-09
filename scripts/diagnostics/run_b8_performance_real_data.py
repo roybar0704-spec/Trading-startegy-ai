@@ -36,13 +36,16 @@ this Sandbox only has 2022-11; see PREFLIGHT_B8.md SS a.10):
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
-import resource
 import sys
 import time
 import traceback
 from datetime import UTC, date, datetime
 from pathlib import Path
+
+if sys.platform != "win32":
+    import resource
 
 import polars as pl
 
@@ -83,8 +86,47 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
+class _ProcessMemoryCounters(ctypes.Structure):
+    """Mirrors Windows' PROCESS_MEMORY_COUNTERS (psapi.h) -- only the fields
+    up to and including PeakWorkingSetSize are used, but the struct's `cb`
+    size must match the real layout for GetProcessMemoryInfo to fill it in."""
+
+    _fields_ = [
+        ("cb", ctypes.c_ulong),
+        ("PageFaultCount", ctypes.c_ulong),
+        ("PeakWorkingSetSize", ctypes.c_size_t),
+        ("WorkingSetSize", ctypes.c_size_t),
+        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+        ("PagefileUsage", ctypes.c_size_t),
+        ("PeakPagefileUsage", ctypes.c_size_t),
+    ]
+
+
+def _peak_rss_mb_windows() -> float:
+    """Windows' analog of POSIX maxrss: PeakWorkingSetSize via GetProcessMemoryInfo
+    (psapi.dll) -- the peak physical-memory working set of this process, not an
+    arbitrary substitute. Bytes -> MB."""
+    counters = _ProcessMemoryCounters()
+    counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+    handle = ctypes.windll.kernel32.GetCurrentProcess()
+    ok = ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb)
+    if not ok:
+        raise OSError("GetProcessMemoryInfo failed (Windows peak RSS measurement)")
+    return counters.PeakWorkingSetSize / (1024 * 1024)
+
+
 def peak_rss_mb() -> float:
-    """Peak resident set size so far, in MB (Linux: ru_maxrss is KB)."""
+    """Peak resident set size so far, in MB.
+
+    POSIX: resource.getrusage().ru_maxrss (Linux: KB -- matches bench_phase0.py's
+    existing convention, unchanged). Windows: PeakWorkingSetSize (bytes), the
+    platform's own equivalent of maxrss -- not a placeholder or arbitrary stand-in.
+    """
+    if sys.platform == "win32":
+        return _peak_rss_mb_windows()
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
 
 
