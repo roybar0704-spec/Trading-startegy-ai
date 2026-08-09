@@ -314,17 +314,17 @@ class RunConfig(_Strict):
 def load_rules_v1(path: Path = CONFIG_DIR / "rules_v1.yaml") -> RulesV1:
     """Verify the frozen hash, then parse. Any drift or schema violation raises."""
     verify_frozen_rules(rules_path=path)
-    return RulesV1.model_validate(yaml.safe_load(path.read_text()))
+    return RulesV1.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
 def load_parameters(path: Path = CONFIG_DIR / "parameters.yaml") -> Parameters:
     """Load and validate config/parameters.yaml."""
-    return Parameters.model_validate(yaml.safe_load(path.read_text()))
+    return Parameters.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
 def load_run_config(path: Path = CONFIG_DIR / "run_default.yaml") -> RunConfig:
     """Load and validate a RunConfig YAML (default: config/run_default.yaml)."""
-    return RunConfig.model_validate(yaml.safe_load(path.read_text()))
+    return RunConfig.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
 def config_hash(
