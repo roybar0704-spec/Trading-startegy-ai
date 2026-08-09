@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import ctypes.wintypes
 import json
 import sys
 import time
@@ -108,13 +109,37 @@ class _ProcessMemoryCounters(ctypes.Structure):
 def _peak_rss_mb_windows() -> float:
     """Windows' analog of POSIX maxrss: PeakWorkingSetSize via GetProcessMemoryInfo
     (psapi.dll) -- the peak physical-memory working set of this process, not an
-    arbitrary substitute. Bytes -> MB."""
+    arbitrary substitute. Bytes -> MB.
+
+    `argtypes`/`restype` are declared explicitly (not left to ctypes' default
+    c_int guessing) because HANDLE is 8 bytes on 64-bit Windows -- an
+    undeclared-argtypes call can silently truncate/mis-marshal the pseudo-handle
+    GetCurrentProcess() returns. `use_last_error=True` + `ctypes.get_last_error()`
+    surface the real Win32 error code on failure instead of a bare "failed".
+    """
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+
+    kernel32.GetCurrentProcess.restype = ctypes.wintypes.HANDLE
+    kernel32.GetCurrentProcess.argtypes = []
+
+    psapi.GetProcessMemoryInfo.restype = ctypes.wintypes.BOOL
+    psapi.GetProcessMemoryInfo.argtypes = [
+        ctypes.wintypes.HANDLE,
+        ctypes.POINTER(_ProcessMemoryCounters),
+        ctypes.wintypes.DWORD,
+    ]
+
     counters = _ProcessMemoryCounters()
     counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
-    handle = ctypes.windll.kernel32.GetCurrentProcess()
-    ok = ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb)
+    handle = kernel32.GetCurrentProcess()
+    ok = psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb)
     if not ok:
-        raise OSError("GetProcessMemoryInfo failed (Windows peak RSS measurement)")
+        err = ctypes.get_last_error()
+        raise OSError(
+            f"GetProcessMemoryInfo failed (Windows peak RSS measurement): "
+            f"{ctypes.WinError(err)}"
+        )
     return counters.PeakWorkingSetSize / (1024 * 1024)
 
 
