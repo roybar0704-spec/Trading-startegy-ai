@@ -71,7 +71,7 @@ displacement:
   model: {default: D1, experiment_levels: [D1, D2, D3, D4, D5]}
   d1:    {body_vs_avg_n: 10, ratio_min: {default: 1.5, grid: [1.25, 1.5, 2.0]}}
 costs:
-  slippage_stop_usd:   {default: 0.10}
+  slippage_stop_usd:   {default: 0.70}  # RA-10, מכויל B-4/D-074 (היה 0.10 עד B-4)
   news_slip_mult:      {default: 3.0}
   slippage_market_usd: {default: 0.05}
   commission_per_unit: {default: 0.0}

@@ -1,5 +1,7 @@
 # PROJECT STATE REPORT — XAUUSD Research Platform
 
+> **⚠️ ARCHIVAL — סריקת-מצב חד-פעמית, קודמת ל-B-4. RA-10/KI-010/Backfill שתוארו כאן כ'לא-פתורים' כבר נסגרו/כויילו מאז. למצב עדכני ר': `docs/KNOWN_ISSUES.md`, `docs/DECISIONS_LOG.md`, `docs/RESEARCH_READINESS_REVIEW.md`.**
+
 **נוצר:** מתוך סריקה ישירה של הריפו בפועל (Git history, קוד, מסמכים, בדיקות) — לא מרשימה חיצונית.
 **Branch בזמן ההפקה:** `claude/xauusd-research-handoff-1amry4` · **HEAD:** `148f2b3db7b4f2f2f7340d73011ede9bb9776700` · **עץ עבודה:** נקי.
 **מסמך זה עצמו:** תיעוד/מחקר בלבד — לא בוצע שום שינוי קוד או Commit כחלק מהפקתו.
