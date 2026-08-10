@@ -1,4 +1,7 @@
 # HANDOFF MASTER — XAUUSD Research Platform
+
+> **⚠️ ARCHIVAL — חבילת-תכנון מקורית, קפואה מ-2026-07-08 (לפני Phase 0). "17 קבצים = מקור-האמת" אינו נכון עוד — הפרויקט כולל כיום 55+ מסמכים ו-Stage A שלם. למצב עדכני ר': `docs/KNOWN_ISSUES.md`, `docs/DECISIONS_LOG.md`, `docs/RESEARCH_READINESS_REVIEW.md`.**
+
 **סגירת תכנון רשמית: 2026-07-08 | Spec: V1 Frozen | נקודת התחלה: Phase 0 בלבד**
 חבילה זו (17 קבצים) = **מקור האמת היחיד**. כל מסמך, טיוטה או גרסה מחוץ לחבילה — Superseded. אין צורך בהיסטוריית השיחות.
 

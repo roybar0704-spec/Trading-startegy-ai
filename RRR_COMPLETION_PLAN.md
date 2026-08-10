@@ -1,5 +1,7 @@
 # RRR COMPLETION PLAN — סגירת שלושת החסמים לפני Research Readiness Review
 
+> **⚠️ ARCHIVAL — תוכנית שנכתבה לפני B-4. כל ארבעת השלבים (B-4/B-5/B-6/B-7) שתוכננו כאן כבר בוצעו במלואם. למצב עדכני ר': `docs/KNOWN_ISSUES.md`, `docs/DECISIONS_LOG.md`, `docs/RESEARCH_READINESS_REVIEW.md`.**
+
 **מסמך תכנון בלבד — לא בוצע שום שינוי קוד, לא נפתח Work Order, לא בוצע Commit.** נכתב לפי בדיקה ישירה של `docs/RESEARCH_READINESS_REVIEW.md`, `WORK_ORDER_PROTOCOL.md`, `KI010_DECISION_DOC.md`, ו-D-071/D-072 ב-`DECISIONS_LOG.md` — לא מהזיכרון.
 
 ---
