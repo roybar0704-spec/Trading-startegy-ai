@@ -27,6 +27,7 @@ class DuckDBJournal:
     def __init__(self, db_path: str | Path, schema_path: str | Path) -> None:
         """Open (or create) the DuckDB file at ``db_path`` and apply the schema."""
         self._con = duckdb.connect(str(db_path))
+        self._con.execute("SET TimeZone='UTC'")
         self._con.execute(Path(schema_path).read_text(encoding="utf-8"))
 
     def record(self, table: str, row: dict) -> None:
