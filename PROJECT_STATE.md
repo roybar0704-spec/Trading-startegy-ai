@@ -1,5 +1,5 @@
 # PROJECT STATE — Context Snapshot
-**Evidence Anchor:** 9db723c3fb690fdad6d2d9dce2e62b771f5bfc63
+**Evidence Anchor:** 79b55bed96d4786178669cd8ef0aaf20b8ee8889
 **Snapshot:** 2026-08-11
 **חובת תחזוקה:** מסמך זה הוא שכבת Context בין הכלים, לא Source of
 Truth. בכל סתירה מול Git או מסמכי Authority — **מסמך זה מפסיד**;
@@ -27,7 +27,7 @@ KNOWN_ISSUES / RESEARCH_READINESS_REVIEW → מסמכי ARCHIVAL
 
 ## Next Action
 
-ניקוי ענפים — j5para, ki-001-proxy-check, b8-integration. אומתו כמוכלים ב-main.
+ניקוי ענפים — j5para, ki-001-proxy-check-qtdhjg, b8-integration, docs-preservation.
 
 ## תחולה
 
