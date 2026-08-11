@@ -12,8 +12,12 @@ phase starts.
 
 ## Status
 
-**Phase 0 — Data Pipeline**: code-complete, data-pending (D-036; see `docs/KNOWN_ISSUES.md` KI-001/KI-002).
-**Phase 1 — State Store + Structure Engines**: in progress (see `docs/PHASE_PLAN.md`).
+**Phase 0 — Data Pipeline**: complete — 39/39 months of real tick data verified (see `BATCH7_CLOSURE_REPORT.md`).
+**Phase 1 — State Store + Structure Engines**: Closed.
+**Phase 2 — Execution Layer**: Green-Conditional (2026-07-09).
+**Phase 3 — End-to-End (narrow)**: Green-Conditional / code-complete (2026-07-10) — T3.4 (the first real backtest run) is blocked until the Research Readiness Review below reaches GO.
+**Stage A (B-1…B-7)**: Closed — see `docs/DECISIONS_LOG.md`.
+**Research Readiness Review**: NO-GO — required before T3.4; see `docs/RESEARCH_READINESS_REVIEW.md`.
 
 ## Setup
 
@@ -32,6 +36,10 @@ python scripts/demo_phase0.py --month 2024-03                     # Phase 0 demo
 python scripts/bench_phase0.py                                    # Phase 0 performance benchmark
 python scripts/demo_phase1.py --period 2024-01-01:2024-02-01      # Phase 1 demo (chart)
 python scripts/bench_phase1.py                                    # Phase 1 performance benchmark
+python scripts/demo_phase2.py                                     # Phase 2 demo
+python scripts/bench_phase2.py                                    # Phase 2 performance benchmark
+python scripts/demo_phase3.py                                     # Phase 3 demo
+python scripts/bench_phase3.py                                    # Phase 3 performance benchmark
 ```
 
 ## Known environment constraint
