@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore  # noqa: E402
 from src.data.validator import Validator  # noqa: E402
 
@@ -52,7 +53,8 @@ def main() -> int:
     args = build_arg_parser().parse_args()
     thresholds = sorted(args.thresholds) if args.thresholds else DEFAULT_GRID
 
-    store = TickParquetStore(Path(args.ticks_dir))
+    # D-085: B-6 calibration uses 3 fixed non-hold-out months; no unlock flag.
+    store = TickParquetStore(Path(args.ticks_dir), holdout_range=XAUUSD_HOLDOUT_RANGE)
     month_label = f"{args.year:04d}-{args.month:02d}"
     print(f"Loading real data: {args.symbol} {month_label} from {args.ticks_dir}")
     ticks = store.read_month(args.symbol, args.year, args.month)

@@ -18,6 +18,7 @@ import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 from src.data.validator import Validator  # noqa: E402
 
@@ -37,11 +38,15 @@ def main() -> int:
     start = datetime(2022, 11, 1, tzinfo=UTC)
     end = datetime(2023, 6, 1, tzinfo=UTC)  # exclusive -> covers through 2023-05-31
 
-    store = TickParquetStore(REPO_ROOT / "data" / "ticks")
+    # D-085: fixed range (2022-11..2023-06), never touches the hold-out -- no unlock flag.
+    store = TickParquetStore(REPO_ROOT / "data" / "ticks", holdout_range=XAUUSD_HOLDOUT_RANGE)
     months = months_between(start, end - timedelta(seconds=1))
     frames = [store.read_month(symbol, y, m) for y, m in months]
     ticks = pl.concat(frames).sort("ts").filter((pl.col("ts") >= start) & (pl.col("ts") < end))
-    print(f"Loaded {ticks.height:,} ticks for {symbol} {start.date()}..{(end - timedelta(days=1)).date()}")
+    print(
+        f"Loaded {ticks.height:,} ticks for {symbol} "
+        f"{start.date()}..{(end - timedelta(days=1)).date()}"
+    )
 
     report = Validator().validate(ticks, symbol)
 

@@ -15,6 +15,7 @@ import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -36,7 +37,8 @@ N_AROUND = 4  # ticks shown before gap-start and after gap-end
 
 def main() -> int:
     symbol = "XAUUSD"
-    store = TickParquetStore(REPO_ROOT / "data" / "ticks")
+    # D-085: fixed range (2023-03-09), never touches the hold-out -- no unlock flag.
+    store = TickParquetStore(REPO_ROOT / "data" / "ticks", holdout_range=XAUUSD_HOLDOUT_RANGE)
 
     day_start = datetime(2023, 3, 9, tzinfo=UTC)
     day_end = day_start + timedelta(days=1)

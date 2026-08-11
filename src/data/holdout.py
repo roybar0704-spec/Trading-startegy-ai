@@ -1,38 +1,39 @@
 """Physical hold-out isolation (docs/SPEC_V1_FROZEN.md §13, RA-06).
 
-The hold-out range (last 6 months by default) is *moved*, not copied, out of
-the main tick store into a physically separate root. A normal loader
-therefore cannot see it by accident; ``HoldoutGuard`` is the only way back
-in, and every unlocked access is logged append-only — the Phase 5
-Experiment Tracker will later consume this same log.
+This module handles Track B: *physically moving* the hold-out range (last 6
+months by default) out of the main tick store into a separate root, and
+``HoldoutGuard`` as the gate back in once that separation has happened.
+
+Track A (fail-closed enforcement on the main store, D-085) lives in
+``src.data.tick_store`` -- ``HoldoutRange``/``HoldoutAccessDenied`` are
+defined there (``TickParquetStore`` cannot depend on this module without a
+cycle, since this module already depends on ``TickParquetStore``) and
+re-exported here for backward compatibility.
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 import polars as pl
 
-from src.data.tick_store import TickParquetStore, months_between
+from src.data.tick_store import (
+    HoldoutAccessDenied,
+    HoldoutRange,
+    TickParquetStore,
+    months_between,
+)
 
-
-class HoldoutAccessDenied(RuntimeError):
-    """Raised when a range overlapping the hold-out is loaded without holdout_unlock=True."""
-
-
-@dataclass(frozen=True)
-class HoldoutRange:
-    """The [start, end) hold-out window, physically isolated."""
-
-    start: datetime
-    end: datetime
-
-    def overlaps(self, start: datetime, end: datetime) -> bool:
-        """True if [start, end) intersects this hold-out range."""
-        return start < self.end and end > self.start
+__all__ = [
+    "HoldoutAccessDenied",
+    "HoldoutRange",
+    "HoldoutGuard",
+    "XAUUSD_HOLDOUT_RANGE",
+    "compute_holdout_range",
+    "separate_holdout",
+]
 
 
 def compute_holdout_range(
@@ -49,6 +50,17 @@ def compute_holdout_range(
     hy, hm = holdout_months[0]
     holdout_start = datetime(hy, hm, 1, tzinfo=UTC)
     return HoldoutRange(start=holdout_start, end=data_end)
+
+
+# The hold-out window implied by config/run_default.yaml (period 2023-01-01..2025-12-31,
+# holdout.last_months=6 -> 2025-07-01..2025-12-31). Scripts operating on the real XAUUSD
+# dataset use this single, shared definition rather than each recomputing it ad hoc
+# (D-085) -- config/run_default.yaml itself is not read here to keep this module
+# config-agnostic; the two must be kept in sync by hand if run_default.yaml's period or
+# holdout.last_months ever change (both are FROZEN-adjacent, RA-governed values).
+XAUUSD_HOLDOUT_RANGE = compute_holdout_range(
+    datetime(2023, 1, 1, tzinfo=UTC), datetime(2025, 12, 31, tzinfo=UTC), last_months=6
+)
 
 
 def separate_holdout(
@@ -80,7 +92,15 @@ class HoldoutGuard:
 
     def __init__(self, holdout_root: Path, usage_log_path: Path) -> None:
         """Create a guard reading from ``holdout_root`` and logging to ``usage_log_path``."""
-        self.store = TickParquetStore(holdout_root)
+        # D-085: the store here reads from holdout_root itself, which IS the
+        # separated hold-out data -- HoldoutGuard.load() below is the gate, so
+        # the inner TickParquetStore's own (redundant) hold-out check is
+        # explicitly disabled rather than asked to reason about a range that
+        # doesn't apply to this root.
+        self.store = TickParquetStore.unprotected(
+            holdout_root, reason="HoldoutGuard is itself the gate; holdout_root is the "
+            "already-separated hold-out data, not the main data/ticks/ store"
+        )
         self.usage_log_path = usage_log_path
 
     def load(

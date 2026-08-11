@@ -24,26 +24,34 @@ def _month_ticks(year: int, month: int) -> pl.DataFrame:
     )
 
 
+def _test_holdout_range():
+    return compute_holdout_range(
+        datetime(2024, 1, 1, tzinfo=UTC), datetime(2024, 12, 31, tzinfo=UTC), last_months=6
+    )
+
+
 @pytest.fixture
 def populated_store(tmp_path):
-    store = TickParquetStore(tmp_path / "ticks")
+    # D-085: this store carries the same holdout_range the test separates below --
+    # Track A (read_month()'s own check) now blocks the moved months structurally,
+    # not just because the underlying file is physically gone (Track B).
+    store = TickParquetStore(tmp_path / "ticks", holdout_range=_test_holdout_range())
     for month in range(1, 13):
         store.write_month("XAUUSD", 2024, month, _month_ticks(2024, month))
     return store
 
 
 def test_at_0_7_holdout_isolation(tmp_path, populated_store):
-    holdout_range = compute_holdout_range(
-        datetime(2024, 1, 1, tzinfo=UTC), datetime(2024, 12, 31, tzinfo=UTC), last_months=6
-    )
+    holdout_range = _test_holdout_range()
     assert holdout_range.start == datetime(2024, 7, 1, tzinfo=UTC)
 
     holdout_root = tmp_path / "holdout"
     moved = separate_holdout(populated_store, holdout_root, "XAUUSD", holdout_range)
     assert len(moved) == 6
 
-    # Physical separation: the main store can no longer read the moved months.
-    with pytest.raises(FileNotFoundError):
+    # Track A: the main store's own read_month() now refuses the hold-out month directly
+    # (HoldoutAccessDenied), independent of the physical move performed above.
+    with pytest.raises(HoldoutAccessDenied):
         populated_store.read_month("XAUUSD", 2024, 8)
 
     usage_log = tmp_path / "holdout_usage.jsonl"

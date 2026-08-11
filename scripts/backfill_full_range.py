@@ -73,6 +73,7 @@ from src.data.dukascopy_downloader import (  # noqa: E402
     DukascopyFetchError,
     Transport,
 )
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import (  # noqa: E402
     TickParquetStore,
     TickStoreConflictError,
@@ -346,7 +347,10 @@ def main() -> int:
             max_retries=args.max_retries,
             backoff_seconds=args.backoff_seconds,
         )
-        store = TickParquetStore(Path(args.ticks_dir))
+        # D-085: this script only ever calls write_month() (acquisition), which is not
+        # hold-out-gated -- holdout_unlock stays False (least privilege); holdout_range
+        # is still mandatory to construct the store at all.
+        store = TickParquetStore(Path(args.ticks_dir), holdout_range=XAUUSD_HOLDOUT_RANGE)
 
         succeeded, failed = 0, 0
         for y, m in pending:

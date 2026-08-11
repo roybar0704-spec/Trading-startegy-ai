@@ -66,6 +66,7 @@ from src.config.models import (  # noqa: E402
 )
 from src.core.types import TF, NewsEvent, RunIdentity, Tick  # noqa: E402
 from src.data.bar_builder import BarBuilder  # noqa: E402
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -221,7 +222,9 @@ def main() -> int:
         print(f"ERROR: --start ({args.start}) must be <= --end ({args.end}).", file=sys.stderr)
         return 1
 
-    store = TickParquetStore(Path(args.ticks_dir))
+    # D-085: B-8 Performance Gate is locked to 2024-01..03 (In-Sample, _LAST_ALLOWED_MONTH
+    # above); no unlock flag -- the store now enforces the hold-out boundary structurally too.
+    store = TickParquetStore(Path(args.ticks_dir), holdout_range=XAUUSD_HOLDOUT_RANGE)
     months = months_between(
         datetime(start_year, start_month, 1, tzinfo=UTC),
         datetime(end_year, end_month, 1, tzinfo=UTC),

@@ -16,7 +16,7 @@ def _df(ts_list):
 
 
 def test_write_month_roundtrip(tmp_path):
-    store = TickParquetStore(tmp_path)
+    store = TickParquetStore.unprotected(tmp_path, reason="unit test, synthetic data")
     ts = [datetime(2024, 3, 1, 0, 0, tzinfo=UTC), datetime(2024, 3, 1, 0, 1, tzinfo=UTC)]
     result = store.write_month("XAUUSD", 2024, 3, _df(ts))
 
@@ -26,7 +26,7 @@ def test_write_month_roundtrip(tmp_path):
 
 
 def test_write_month_same_content_is_a_noop(tmp_path):
-    store = TickParquetStore(tmp_path)
+    store = TickParquetStore.unprotected(tmp_path, reason="unit test, synthetic data")
     ts = [datetime(2024, 3, 1, 0, 0, tzinfo=UTC)]
     r1 = store.write_month("XAUUSD", 2024, 3, _df(ts))
     r2 = store.write_month("XAUUSD", 2024, 3, _df(ts))
@@ -34,7 +34,7 @@ def test_write_month_same_content_is_a_noop(tmp_path):
 
 
 def test_write_month_conflicting_content_raises(tmp_path):
-    store = TickParquetStore(tmp_path)
+    store = TickParquetStore.unprotected(tmp_path, reason="unit test, synthetic data")
     store.write_month("XAUUSD", 2024, 3, _df([datetime(2024, 3, 1, tzinfo=UTC)]))
     with pytest.raises(TickStoreConflictError):
         store.write_month("XAUUSD", 2024, 3, _df([datetime(2024, 3, 2, tzinfo=UTC)]))

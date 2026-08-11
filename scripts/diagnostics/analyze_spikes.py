@@ -32,6 +32,7 @@ import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 from src.data.validator import DEFAULT_SPIKE_Z_THRESHOLD, Validator  # noqa: E402
 
@@ -73,6 +74,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--ticks-dir", default=str(REPO_ROOT / "data" / "ticks"))
     p.add_argument("--spike-z-threshold", type=float, default=DEFAULT_SPIKE_Z_THRESHOLD)
     p.add_argument("--spike-baseline-window", type=int, default=500)
+    p.add_argument(
+        "--holdout-unlock", action="store_true",
+        help="D-085: allow reading hold-out months (2025-07..2025-12). Requires --holdout-reason.",
+    )
+    p.add_argument("--holdout-reason", default="", help="Required when --holdout-unlock is set.")
     return p
 
 
@@ -81,7 +87,14 @@ def main() -> int:
     start = _parse_date(args.start)
     end = _parse_date(args.end) + timedelta(days=1)
 
-    store = TickParquetStore(Path(args.ticks_dir))
+    store = TickParquetStore(
+        Path(args.ticks_dir),
+        holdout_range=XAUUSD_HOLDOUT_RANGE,
+        holdout_unlock=args.holdout_unlock,
+        unlock_reason=args.holdout_reason,
+        usage_log_path=Path(args.ticks_dir).parent / "holdout_access_log.jsonl"
+        if args.holdout_unlock else None,
+    )
     months = months_between(start, end - timedelta(seconds=1))
     frames = [store.read_month(args.symbol, y, m) for y, m in months]
     ticks = pl.concat(frames).sort("ts").filter((pl.col("ts") >= start) & (pl.col("ts") < end))

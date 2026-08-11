@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.core.types import TF  # noqa: E402
 from src.data.bar_builder import BarBuilder  # noqa: E402
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -192,7 +193,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_arg_parser().parse_args()
-    store = TickParquetStore(Path(args.ticks_dir))
+    # D-085: AT-0 checks run against November 2022; no unlock flag.
+    store = TickParquetStore(Path(args.ticks_dir), holdout_range=XAUUSD_HOLDOUT_RANGE)
     month_label = f"{args.year:04d}-{args.month:02d}"
     print(f"Loading real data: {args.symbol} {month_label} from {args.ticks_dir}")
     ticks = store.read_month(args.symbol, args.year, args.month)

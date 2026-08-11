@@ -60,7 +60,9 @@ def main() -> None:
 
     bench_dir = REPO_ROOT / "benchmarks"
     bench_dir.mkdir(exist_ok=True)
-    store = TickParquetStore(bench_dir / "_scratch_ticks")
+    store = TickParquetStore.unprotected(
+        bench_dir / "_scratch_ticks", reason="synthetic scratch benchmark data"
+    )
     t0 = time.perf_counter()
     store.write_month("XAUUSD", 2024, 3, ticks)
     t_write = time.perf_counter() - t0

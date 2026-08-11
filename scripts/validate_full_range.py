@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.core.types import TF  # noqa: E402
 from src.data.bar_builder import BarBuilder  # noqa: E402
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.spread_report import build_spread_report  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 from src.data.validator import (  # noqa: E402
@@ -143,7 +144,13 @@ def main() -> int:
     start = _parse_date(args.start)
     end = _parse_date(args.end) + timedelta(days=1)
 
-    store = TickParquetStore(Path(args.ticks_dir))
+    store = TickParquetStore(
+        Path(args.ticks_dir),
+        holdout_range=XAUUSD_HOLDOUT_RANGE,
+        holdout_unlock=True,
+        unlock_reason="data integrity validation, not research (D-085 Category A)",
+        usage_log_path=Path(args.ticks_dir).parent / "holdout_access_log.jsonl",
+    )
     months = months_between(start, end - timedelta(seconds=1))
 
     available, missing = [], []

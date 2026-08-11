@@ -38,6 +38,7 @@ import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.spread_report import build_spread_report  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 
@@ -87,7 +88,10 @@ def main() -> int:
         print(f"ERROR: --start ({args.start}) must be before --end ({args.end}).", file=sys.stderr)
         return 1
 
-    store = TickParquetStore(Path(args.ticks_dir))
+    # D-085: D-073 already restricts this script's own range to 2022-10..2025-06,
+    # deliberately excluding the hold-out; no unlock flag -- the store now enforces
+    # that restriction structurally too, not just by the caller's own discipline.
+    store = TickParquetStore(Path(args.ticks_dir), holdout_range=XAUUSD_HOLDOUT_RANGE)
     months = months_between(start, end - timedelta(seconds=1))
 
     # Guard 2 (post-resolution): re-check the actual (year, month) tuples

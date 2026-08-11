@@ -48,6 +48,7 @@ from src.config.models import (  # noqa: E402
 )
 from src.core.types import TF, NewsEvent, RunIdentity, Tick  # noqa: E402
 from src.data.bar_builder import BarBuilder  # noqa: E402
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -84,7 +85,8 @@ def main() -> int:
         "KI-022 not closed (validator not run at all in this script).")
     log("")
 
-    store = TickParquetStore(REPO_ROOT / "data" / "ticks")
+    # D-085: B-3 diagnostic uses November 2022 only; no unlock flag.
+    store = TickParquetStore(REPO_ROOT / "data" / "ticks", holdout_range=XAUUSD_HOLDOUT_RANGE)
     month_path = store.month_path(SYMBOL, YEAR, MONTH)
     log(f"Loading ticks from {month_path} ...")
     ticks_df = store.read_month(SYMBOL, YEAR, MONTH)

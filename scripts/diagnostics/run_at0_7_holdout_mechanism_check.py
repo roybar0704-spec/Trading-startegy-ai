@@ -68,15 +68,20 @@ def main() -> int:
         holdout_root = tmp_root / "holdout"
         usage_log = tmp_root / "holdout_usage.jsonl"
 
-        store = TickParquetStore(ticks_root)
-        store.write_month(args.symbol, 2022, 11, real_ticks)
-        print("Wrote the real November-2022 ticks into the temp store as the only month present.")
-
         holdout_range = compute_holdout_range(
             datetime(2022, 11, 1, tzinfo=UTC), datetime(2022, 11, 30, tzinfo=UTC), last_months=1
         )
         print(f"compute_holdout_range() -> {holdout_range.start} .. {holdout_range.end}")
         assert holdout_range.start == datetime(2022, 11, 1, tzinfo=UTC)
+
+        # D-085: this store now carries the SAME holdout_range that separate_holdout()
+        # below will physically move -- Track A (the store's own read_month() check)
+        # therefore blocks access structurally, before physical absence even matters.
+        # This proves defense-in-depth: Track A alone would already refuse this read,
+        # independent of whether separate_holdout() (Track B) has run.
+        store = TickParquetStore(ticks_root, holdout_range=holdout_range)
+        store.write_month(args.symbol, 2022, 11, real_ticks)
+        print("Wrote the real November-2022 ticks into the temp store as the only month present.")
 
         moved = separate_holdout(store, holdout_root, args.symbol, holdout_range)
         print(f"separate_holdout() moved {len(moved)} month(s): {[str(p) for p in moved]}")
@@ -88,8 +93,11 @@ def main() -> int:
             store.read_month(args.symbol, 2022, 11)
             print("FAIL: main store still able to read the moved (holdout) month")
             ok = False
-        except FileNotFoundError:
-            print("PASS: main store cannot read the moved (holdout) month (FileNotFoundError)")
+        except HoldoutAccessDenied:
+            print(
+                "PASS: main store cannot read the moved (holdout) month "
+                "(HoldoutAccessDenied, Track A -- D-085)"
+            )
 
         guard = HoldoutGuard(holdout_root, usage_log)
         window_start = datetime(2022, 11, 15, tzinfo=UTC)
