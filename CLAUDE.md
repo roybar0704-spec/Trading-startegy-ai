@@ -28,12 +28,21 @@ Backtesting ריאליסטי, פרוטוקול מחקר אנטי-הטיות, ו�
 - **אנומליות דאטה מדוּגללות, לא מושתקות.** אין `try/except pass` על נתונים.
 - **Definition of Done למשימה:** קוד + בדיקות + Docstrings + עובר `pytest -q` + עובר בדיקת Prefix-Consistency אם נגע במנוע + כל החלטה משמעותית שהתקבלה תוך כדי נרשמה ב-`DECISIONS_LOG.md`.
 
+**סדר סמכות:** Git/Code → Tests/Evidence → `docs/DECISIONS_LOG.md` →
+`docs/KNOWN_ISSUES.md` · `docs/RESEARCH_READINESS_REVIEW.md` → מסמכי ARCHIVAL.
+`PROJECT_STATE.md` הוא שכבת Context בין הכלים — לא Source of Truth.
+
 ## מבנה הריפו
 ```
 xauusd-research/
+│  (עץ יעד; השורש בפועל מכיל גם מסמכי ממשל — WORK_ORDER_*,
+│   PREFLIGHT_*, BATCH*_CLOSURE_REPORT, PROJECT_STATE.md,
+│   WORK_ORDER_PROTOCOL.md, KI010_DECISION_DOC.md)
 ├── CLAUDE.md
-├── HANDOFF_MASTER.md                # אינדקס-על — מקור האמת היחיד של הפרויקט
-├── README.md · pyproject.toml            (נוצרים ב-Phase 0)
+├── PROJECT_STATE.md              # שכבת Context בין הכלים
+├── WORK_ORDER_PROTOCOL.md        # FROZEN — פרוטוקול Blockers (D-066)
+├── HANDOFF_MASTER.md                # ARCHIVAL — אינדקס היסטורי, לא מקור אמת
+├── README.md · pyproject.toml · uv.lock
 ├── config/
 │   ├── rules_v1.yaml        # FROZEN — אסור לערוך
 │   ├── parameters.yaml      # פרמטרים + Grids מוצהרים
@@ -48,21 +57,33 @@ xauusd-research/
 │   └── DECISIONS_LOG.md             # יומן החלטות — חובת עדכון שוטפת
 ├── db/schema.sql
 ├── src/
-│   ├── data/         # provider · dukascopy_downloader · bar_builder · validator
-│   ├── store/        # state_store · market_context
-│   ├── structure/    # fractals · bos · sweep · bias
-│   ├── fvg/          # detector · mitigation · ranking · ifvg
-│   ├── displacement/ # d1_body · d2_tickvol · d3_atr · d4_consec · d5_composite
+│   ├── config/       # models · frozen_guard
+│   ├── core/         # types · rolling
+│   ├── data/         # dukascopy_downloader · browser_transport · bar_builder ·
+│   │                 # validator · tick_store · holdout · news_loader ·
+│   │                 # spread_report · versioning
+│   ├── store/        # state_store
+│   ├── structure/    # fractals · bos_sweep · bias · engine
+│   ├── fvg/          # detector · mitigation · ranking · engine
+│   ├── displacement/ # model · d1_body (D2–D5: ממשק בלבד, טרם ממומשים)
 │   ├── session/      # session_engine · calendar_engine
-│   ├── entry/        # setup_stream (State Machine) · m1 · m2 · m4
-│   ├── risk/         # sizing · quota · geometry
+│   ├── entry/        # setup_stream · m1 · m2 · m4 · sl_geometry
+│   ├── risk/         # engine · sizing · portfolio
 │   ├── execution/    # fill_simulator · cost_model
-│   ├── backtest/     # orchestrator · events · portfolios
+│   ├── backtest/     # orchestrator · run_builder · portfolio_arm · context_snapshot
 │   ├── journal/      # duckdb_writer
-│   ├── features/     # Feature Store: registry · extractors · snapshots
-│   ├── stats/ · validation/ · tracker/ · scoring/ · ai/ · viz/
-├── tests/            # fixtures/ + בדיקות לפי ACCEPTANCE_TESTS.md
-└── data/             # gitignored; ticks/ · bars/ · holdout/ (מופרד פיזית)
+│   ├── viz/          # trade_page
+│   │  ── טרם קיימים (Phase 4–6 לפי PHASE_PLAN) ──
+│   ├── features/     # Feature Store (Phase 4)
+│   ├── stats/ · scoring/        # Phase 4
+│   ├── validation/ · tracker/   # Phase 5
+│   └── ai/                      # Phase 6
+├── scripts/          # demo_phase* · bench_phase* · ci.sh · backfill_full_range ·
+│                     # validate_full_range · diagnostics/ · tools/
+├── tests/            # fixtures/ · golden/ · בדיקות לפי ACCEPTANCE_TESTS.md
+└── data/             # gitignored; ticks/ (33 חודשי Research) ·
+                      # holdout/ (6 חודשים, 2025-07..12) — הופרד פיזית ב-B-9/D-086,
+                      # אכיפה fail-closed ב-D-085; news/ · raw/ · registry/
 ```
 
 ## סטאק
