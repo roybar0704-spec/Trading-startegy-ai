@@ -29,7 +29,7 @@ Data: DukascopyDownloader(bi5+LZMA, cache immutable) → Validator → BarBuilde
 3. **זרם בסיס 1M + Tick-on-Demand:** ירידה לרזולוציית Tick רק כשפקודה פעילה ליד SL/TP או מחיר ליד גבול FVG. דטרמיניסטי ומהיר.
 4. **Multi-Portfolio Paired Design:** 9 תיקים ({M1,M2,M4}×{R,S,Wick}) על Setup Stream זהה. בתוך מודל כניסה — כניסה זהה לשלוש זרועות SL → השוואה זוגית טהורה של עוגן הסטופ. לכל תיק: הון, מכסה ו-Equity Curve משלו.
 5. **Reproducibility:** ריצה = `(config_hash, data_version, code_version)`; Append-Only Tracker; Seed לכל אקראיות.
-6. **Hold-Out פיזי:** `data/holdout/` נפרד; Loader מסרב בלי דגל מתועד.
+6. **Hold-Out פיזי:** `data/holdout/` נפרד; Loader מסרב בלי דגל מתועד. **מומש ואומת:** אכיפה fail-closed ב-`TickParquetStore.read_month()` (D-085); הפרדה פיזית בפועל של 6 חודשים (2025-07..12) ב-B-9/D-086, מאומתת V1–V13 (byte-identical, 33+6=39).
 7. **עצמאות ממקור נתונים (D-037):** כל מודול משכבת ה-Structure ומעלה צורך רק את הטיפוסים הנייטרליים ממקור (`Tick`/`Bar`/`MarketContext`) או את הפרוטוקול `DataProvider` (INTERFACES.md) — לעולם לא `DukascopyDownloader` באופן קונקרטי, ולעולם לא ענף קוד המבחין בין "סינתטי" ל"אמיתי". אותו קוד בדיוק חייב לרוץ זהה בין Fixture סינתטי (Phase 1–2) לבין דאטה אמיתי מ-Dukascopy (מ-Phase 3 ואילך) — ההבדל היחיד המותר הוא איזה מימוש של `DataProvider`/אילו אובייקטי `Bar` הוזרקו לריצה. זה מה שהופך את הבדיקות ב-Fixtures ל-Phase 1–2 לתקפות: הן בודקות בדיוק את אותו קוד שירוץ על הדאטה האמיתי, לא חיקוי נפרד שלו.
 
 ## לולאת האירועים (פסאודו)
@@ -55,7 +55,9 @@ Dukascopy bi5 → פענוח LZMA → Tick Parquet חודשי (immutable, hash) 
 ## מודולים — אחריות בשורה
 | מודול | אחריות |
 |---|---|
-| data | הורדה, ולידציה, בניית נרות, גרסוּה |
+| config | Pydantic models · frozen_guard (FROZEN config hash) |
+| core | טיפוסי בסיס · rolling |
+| data | הורדה, ולידציה, בניית נרות, גרסוּה, Hold-Out enforcement (D-085) |
 | store | State Store + MarketContext (as-of) |
 | structure | Fractals, BOS, Sweep, Bias-SM |
 | fvg | זיהוי, Mitigation חי, דירוג, iFVG |
@@ -66,11 +68,12 @@ Dukascopy bi5 → פענוח LZMA → Tick Parquet חודשי (immutable, hash) 
 | execution | Fill Simulator + Cost Model |
 | backtest | Orchestrator, Events, Portfolios |
 | journal | כתיבה טרנזקציונית ל-DuckDB |
-| stats | כל המדדים + פילוחים + MAE/MFE |
-| validation | WF, Hold-Out Guard, Random Baseline (זוגי), Sensitivity |
-| tracker | config_hash, רישום ריצות Append-Only |
-| scoring / ai / viz | Log-Only Scoring · Analyst · Plotly per-trade |
+| viz | Plotly per-trade |
+| *(טרם ממומשים — ר' PHASE_PLAN)* | |
+| stats · scoring | Phase 4 — מדדים, פילוחים, MAE/MFE · Log-Only Scoring |
+| validation · tracker | Phase 5 — WF, Hold-Out Guard, Baseline, Sensitivity · config_hash |
+| ai | Phase 6 — Analyst |
 
 ## בדיקות-על
-Prefix-Consistency (גלאי Lookahead, חובה ב-CI) · Golden Regression · DST Boundaries · Race-09:00 · Cost Sanity · Reproducibility (שתי ריצות זהות → יומן זהה).
+Prefix-Consistency (גלאי Lookahead, חובה ב-CI) · Golden Regression (מומש ב-B-8, KI-024 — `tests/test_golden_regression.py`) · DST Boundaries · Race-09:00 · Cost Sanity · Reproducibility (שתי ריצות זהות → יומן זהה).
 פירוט מלא: ACCEPTANCE_TESTS.md.

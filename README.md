@@ -4,19 +4,25 @@ A research platform (not a trading indicator) for testing an SMC-based XAUUSD st
 realistic backtesting, an anti-bias research protocol, and paired comparison of
 entry/stop-loss arms on an identical setup stream.
 
-The project's source of truth is the handoff package at the repo root / `docs/`:
-read `CLAUDE.md` first, then follow `docs/HANDOFF_MASTER.md` §2 for the mandatory
-reading order. Work proceeds strictly by `docs/PHASE_PLAN.md` phases; each phase
+Authority order: Git/Code → Tests/Evidence → `docs/DECISIONS_LOG.md` →
+`docs/KNOWN_ISSUES.md` · `docs/RESEARCH_READINESS_REVIEW.md` → ARCHIVAL documents.
+Read `CLAUDE.md` first, then `docs/PHASE_PLAN.md` and `docs/ACCEPTANCE_TESTS.md`.
+`HANDOFF_MASTER.md` (repo root) is ARCHIVAL. Work proceeds strictly by phases; each phase
 ends in a demoable artifact and requires explicit user approval before the next
 phase starts.
 
 ## Status
 
-**Phase 0 — Data Pipeline**: complete — 39/39 months of real tick data verified (see `BATCH7_CLOSURE_REPORT.md`).
+**Phase 0 — Data Pipeline**: complete — 39/39 months of real tick data acquired and
+verified (2022-10..2025-12). KI-001 (network access) closed by D-069; KI-002
+(point_value) closed by D-070. Data is physically split: 33 research months in
+`data/ticks`, 6 hold-out months (2025-07..12) in `data/holdout` (B-9 / D-086).
 **Phase 1 — State Store + Structure Engines**: Closed.
 **Phase 2 — Execution Layer**: Green-Conditional (2026-07-09).
 **Phase 3 — End-to-End (narrow)**: Green-Conditional / code-complete (2026-07-10) — T3.4 (the first real backtest run) is blocked until the Research Readiness Review below reaches GO.
-**Stage A (B-1…B-7)**: Closed — see `docs/DECISIONS_LOG.md`.
+**Stage A (B-1…B-7)**: Closed. **B-8**: merged; Performance and Documentation gates
+not yet green. **B-9 (Track B)**: Closed — physical hold-out separation (D-085/D-086).
+See `docs/DECISIONS_LOG.md`.
 **Research Readiness Review**: NO-GO — required before T3.4; see `docs/RESEARCH_READINESS_REVIEW.md`.
 
 ## Setup
@@ -46,10 +52,13 @@ python scripts/bench_phase3.py                                    # Phase 3 perf
 
 Real historical tick data comes from Dukascopy (`docs/SPEC_V1_FROZEN.md` §1).
 Acquiring it requires outbound network access to `datafeed.dukascopy.com`.
-See `docs/KNOWN_ISSUES.md` for the current status of live data acquisition in
-this environment; the data pipeline itself (downloader, validator, bar builder,
-spread report, holdout isolation) is implemented and tested against synthetic
-fixtures that reproduce Dukascopy's tick wire format.
+Network access was resolved in D-069 (browser-like transport); all 39 months have
+been downloaded and verified. The pipeline is tested against synthetic fixtures and
+has also been run against real data (D-072, D-075).
+
+**Open limitation — KI-010 (news coverage):** the real economic calendar covers
+CPI and Employment Situation only (2 of 7 high-impact USD event types). Core PCE,
+GDP, FOMC, ISM PMI and Retail Sales are not yet covered. See `docs/KNOWN_ISSUES.md`.
 
 ## Repo layout
 

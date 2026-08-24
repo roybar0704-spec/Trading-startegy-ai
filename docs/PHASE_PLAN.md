@@ -11,7 +11,7 @@
 
 **Gate (מפוצל — D-036):**
 - **תת-שער קוד (סגור):** AT-0.1–AT-0.7 ירוקות מול Fixtures סינתטיים שמדמים במדויק את פורמט ה-wire של Dukascopy; כל שאר Quality Gates ירוקים.
-- **תת-שער דאטה (פתוח, KI-001/KI-002):** 3 שנות דאטה אמיתי נקיות + דו"ח ספרד אמיתי מוצג למשתמש + כיול RA-10 — טרם קיימים (סביבת הפיתוח חוסמת רשת ל-Dukascopy). **אינו חוסם Phase 1–2** (הבדיקות שלהם מתוכננות על Fixtures סינתטיים לפי ACCEPTANCE_TESTS.md ואינן תלויות בדאטה אמיתי). **חוסם באופן מוחלט את T3.4 ואת Phase 4–5** — ר' "Research Readiness Review" לפני Phase 3 למטה.
+- **תת-שער דאטה (סגור):** KI-001 נסגר (D-069 — חסימת הרשת נפתרה דרך `BrowserLikeTransport`); KI-002 נסגר (D-070 — `point_value` אומת מול דאטה אמיתי). 39 חודשי דאטה אמיתי (2022-10..2025-12) הורדו ואומתו (Batch 1–7). דו"ח ספרד אמיתי הופק על 33 חודשים וכיול RA-10 בוצע (B-4 / D-073, D-074). Hold-out (2025-07..12) הופרד פיזית ב-B-9/D-086 עם אכיפה fail-closed (D-085). **T3.4 עדיין חסום** — ר' "Research Readiness Review", שנותר NO-GO מסיבות אחרות (ר' RRR שורה 5).
 
 ## Phase 1 — State Store + Structure Engines
 **עקרון מחייב לכל מודול בפאזה זו (D-037, ר' ARCHITECTURE.md): עצמאות ממקור נתונים.** כל מודול חייב לפעול ללא שינוי קוד בין Fixture סינתטי לבין דאטה אמיתי מ-Dukascopy — ההבדל היחיד מותר להיות מקור הקלט (איזה `DataProvider`/`Bar`/`Tick` מוזרק), לעולם לא ענפי קוד שונים.
@@ -29,7 +29,7 @@
 - T2.3 Risk Engine: Sizing ממומש 0.5%, min_stop, גאומטריה, מכסה פר-תיק.
 - T2.4 Portfolio isolation (הון/מכסה/Equity לכל זרוע).
 
-**Gate: Green-Conditional (סגור, 2026-07-09, באישור משתמש, בדפוס D-036):** AT-2.1–AT-2.8 ירוקות (48/48 בבדיקה מלאה כולל Phase 0–1); כל שאר חמשת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase2.py`) רץ מקצה-לקצה. **התנאי:** KI-001 ו-KI-007 (שניהם `high`) נשארים פתוחים אך **אינם חוסמים** את סגירת Phase 2 עצמה — הם הופכים לחוסמים מחייבים לפני T3.4 (Research Readiness Review, D-037). KI-006 ו-KI-007 נקבעו כחלק מחייב מעיצוב ה-Orchestrator הראשוני (T3.3), לא כ-Refactor מאוחר.
+**Gate: Green-Conditional (סגור, 2026-07-09, באישור משתמש, בדפוס D-036):** AT-2.1–AT-2.8 ירוקות (48/48 בבדיקה מלאה כולל Phase 0–1); כל שאר חמשת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase2.py`) רץ מקצה-לקצה. **התנאי (כפי שנוסח בזמנו):** KI-001 ו-KI-007 (שניהם `high`) נשארו פתוחים אך **לא חסמו** את סגירת Phase 2 עצמה. **עדכון:** שניהם נסגרו מאז — KI-001 ב-D-069, KI-007 ב-D-055. הם היו חוסמים מחייבים לפני T3.4 (Research Readiness Review, D-037). KI-006 ו-KI-007 נקבעו כחלק מחייב מעיצוב ה-Orchestrator הראשוני (T3.3), לא כ-Refactor מאוחר.
 
 ## Phase 3 — End-to-End צר (M2 × S_body בלבד)
 - T3.1 Session+Calendar Engines: חלון, Blackout, ביטולים, effective_window, day_roll.
