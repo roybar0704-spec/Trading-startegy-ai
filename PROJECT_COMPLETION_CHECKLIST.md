@@ -56,7 +56,7 @@
 |---|---|---|---|---|---|
 | 3.1 | גישת רשת ל-Dukascopy | COMPLETE | KI-001 closed (D-069), `src/data/browser_transport.py` | לא | — |
 | 3.2 | `point_value` מאומת | COMPLETE | KI-002 closed (D-070), נובמבר 2022, 3,641,776 ticks | לא | — |
-| 3.3 | 39 חודשי דאטה מלאים | **REQUIRES VERIFICATION** | 33 Research + 6 Hold-Out — **דיווח מהמחשב המקומי (V1–V13, B-9). לא אומת עצמאית.** `data/` הוא gitignored; בסביבת האימות של ה-Checklist קיים קובץ Parquet אחד בלבד. הראיה הקיימת אינה מספיקה לאימות עצמאי — ר' §13.8 | לא | ניתוח `B2_postflight_raw_output.txt`, או אימות ישיר על המכונה שמחזיקה את הדאטה |
+| 3.3 | 39 חודשי דאטה מלאים | **PASS WITH CAVEATS** | 33 Research + 6 Hold-Out — אומת עצמאית ע"י Claude Code (D-089, ר' §13.3/§13.8): כל 39 החודשים קיימים בפועל בסביבה זו (33 מתחת ל-`data/ticks` + 6 מתחת ל-`data/holdout`, בדיקה ישירה), **לא** "קובץ Parquet אחד בלבד" כפי שנרשם קודם — אותה קביעה קודמת הייתה שגויה/מיושנת. שני פערים פרוצדורליים נותרים (HEAD היסטורי בזמן B.2 = STRONGLY INFERRED; פלט Dry-Run היסטורי = INCONCLUSIVE) — ר' §13.3; אינם נוגעים לשלמות/נכונות הדאטה עצמו | לא | אופציונלי בלבד — ר' §13.3 |
 | 3.4 | Validator — חורים/ספייקים | COMPLETE | `src/data/validator.py`; AT-0.3 | לא | — |
 | 3.5 | ספי Validator כ-RA מתועדים | PARTIAL | `spike_z_threshold` = RA-29 (D-076); **`gap_threshold` לא רשום** (KI-008) | לא | לרשום כ-RA |
 | 3.6 | ראיית דאטה-אמיתי ל-AT-0.* | PARTIAL | RRR שורה 4 = GO with explicit limitations (B-5, D-075) | לא | — |
@@ -251,12 +251,12 @@
 |---|---|---|---|---|---|
 | 13.1 | חלוקת Development / Hold-Out | COMPLETE | 33 Research (`2022/10–2025/06`) + 6 Hold-Out (`2025/07–12`) | לא | — |
 | 13.2 | **Track A** — אכיפה Fail-Closed בקוד | COMPLETE | D-085; `TickParquetStore.holdout_range` חובה; T1–T6 PASS | לא | T7 = ACCEPTED WITH ENVIRONMENTAL LIMITATION |
-| 13.3 | **Track B** — הפרדה פיזית בפועל | **REQUIRES VERIFICATION** | D-086; `scripts/tools/run_separate_holdout.py` קיים ונבדק. ההרצה בפועל וה-V1–V13 בוצעו על המחשב המקומי — **דיווח, לא ראיה מאומתת עצמאית.** ר' §13.8 | לא | ניתוח `B2_postflight_raw_output.txt` |
+| 13.3 | **Track B** — הפרדה פיזית בפועל | **PASS WITH CAVEATS** | D-089: 33+6=39 ללא חפיפה/חורים (V5/V9/V10), Hash מאומת מול פרובננס בלתי-תלוי `BATCH7_CLOSURE_REPORT.md` (V4/V11, קומיט מ-5 ימים לפני ה-Move), Fail-Closed מאומת מול קוד אמיתי (V6/V7/V12) — שתי ריצות עצמאיות (2026-08-11/12). **פערים נותרים, לא CONFIRMED:** HEAD היסטורי בזמן B.2 = STRONGLY INFERRED בלבד (`a28ba8c104fa2886074e517e7cb5f101c4b1045d`); פלט ה-Dry-Run ההיסטורי = INCONCLUSIVE (הפקודה רצה, הפלט לא נלכד) | לא | אופציונלי בלבד — Capture חוזר של HEAD/Dry-Run על מחשב-הבית אינו תנאי לנכונות (ר' D-089) |
 | 13.4 | **Track C** — Sanity סופי לפני T3.4 | **NOT STARTED** | לא התחיל | לא | לפני T3.4 |
 | 13.5 | `HoldoutGuard` — Loader מסרב, שימוש נרשם | COMPLETE | `src/data/holdout.py`; T5.2 מוקדם | לא | — |
 | 13.6 | Walk-Forward Splitter (9M/3M) | **NOT STARTED** | T5.1 | לא | Phase 5 |
 | 13.7 | Freeze points מוגדרים | **NOT STARTED** | — | לא | לפני Final Run |
-| 13.8 | ניתוח עצמאי של `B2_postflight_raw_output.txt` | **REQUIRES VERIFICATION** | הקובץ קיים במחשב המקומי; **מעולם לא נותח ע"י Claude Code** | לא | ניתוח V1–V13 |
+| 13.8 | ניתוח עצמאי של `B2_postflight_raw_output.txt` | **COMPLETE** | בוצע במלואו ע"י Claude Code (D-089) — כולל `docgate_step4.txt` (התמלול המקורי הרחב יותר), אימות-Provenance מול `BATCH7_CLOSURE_REPORT.md`, ושחזור-Timeline מול Git History | לא | — |
 | 13.9 | הערכה סופית על ה-Hold-Out | **NOT STARTED** | רק אחרי RRR GO ו-Phase 5 | לא | Final Run |
 
 - [ ] **13. Hold-Out / Walk-Forward** — `PARTIAL`.
