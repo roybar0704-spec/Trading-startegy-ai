@@ -24,7 +24,7 @@
 | 1.2 | `DECISIONS_LOG` מעודכן, ללא כפילויות | COMPLETE | 87 רשומות `D-001…D-087`; `uniq -d` ריק | לא | עדכון שוטף |
 | 1.3 | `KNOWN_ISSUES` מתוחזק | PARTIAL | 24 KI; 8 פתוחים/חלקיים | לא | ר' §16 |
 | 1.4 | `ACCEPTANCE_TESTS` מוגדרים | PARTIAL | 47 AT מוגדרים; 36 עם קובץ ייעודי | לא | ר' §15 |
-| 1.5 | `QUALITY_GATES` — ששת השערים ירוקים | **BLOCKED** | RRR שורה 5 = ❌ NO-GO (D-079/D-080) | **כן** | Performance + Documentation Gates |
+| 1.5 | `QUALITY_GATES` — ששת השערים ירוקים | **COMPLETE** | RRR שורה 5 = ✅ GO (B-11A/D-090, B-11B/D-091) — כל ששת תת-הסעיפים ירוקים: Code-Quality, Architecture, Functional, Regression, Documentation, Performance | לא | — |
 | 1.6 | `RESEARCH_READINESS_REVIEW` = GO | **BLOCKED** | שורה 5 NO-GO ⇒ פסיקה כוללת NO-GO | **כן** | ר' §17 |
 | 1.7 | `WORK_ORDER_PROTOCOL.md` נאכף | PARTIAL | `PREFLIGHT_B10.md §5` — Commit #1 בוצע ללא PREFLIGHT קודם; מתועד | לא | `PREFLIGHT_B9.md` retroactive חסר (GOV-3) |
 | 1.8 | `CLAUDE.md` משקף את מבנה הריפו בפועל | PARTIAL | B-10 Commit #1 (`c2bfc4b`) תיקן את עץ הריפו | לא | S2/S3/S4 — ר' §1.9 |
@@ -347,7 +347,7 @@
 | 2 | KI-002 נסגר? | ✅ GO (D-070) |
 | 3 | RA-10 כויל? | ✅ GO (B-4, D-074) |
 | 4 | נתוני Dukascopy אומתו? | ⚠️ GO with explicit limitations (B-5, D-075) |
-| 5 | **Quality Gates ירוקים?** | ❌ **NO-GO** (B-8, D-079/D-080) — Performance + Documentation |
+| 5 | **Quality Gates ירוקים?** | ✅ **GO** (B-11A/D-090, B-11B/D-091) — כל ששת תת-השערים ירוקים |
 | 6 | KI-007 נסגר? | ✅ GO (D-055) |
 | 7 | KI-010 נסגר? | ⚠️ GO with explicit limitations (B-7, D-077/D-078) |
 | 8 | KI-006 נסגר? | ✅ GO (T3.3) |
@@ -355,7 +355,7 @@
 
 > **פסיקה נוכחית: NO-GO.** סעיף אחד NO-GO ⇒ הפסיקה הכוללת NO-GO. **T3.4 חסום.**
 
-- [ ] **17. RRR** — `BLOCKED`. פעולה נותרת: לסגור Performance Gate ו-Documentation Gate, ואז להריץ RRR מחדש.
+- [ ] **17. RRR** — `BLOCKED`. שורה 5 (Quality Gates) עברה ל-GO (B-11A/D-090, B-11B/D-091). פעולה נותרת: הרצה-מחדש מלאה של כל תשעת שורות ה-RRR, כולל שורה 9 (שיפוט מפורש, לא ברירת-מחדל), ואישור מפורש של Roy להכרזת GO כוללת.
 
 ## 18. Final Run / Freeze / Archive
 
