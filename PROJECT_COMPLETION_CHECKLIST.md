@@ -28,8 +28,8 @@
 | 1.6 | `RESEARCH_READINESS_REVIEW` = GO | **BLOCKED** | שורה 5 NO-GO ⇒ פסיקה כוללת NO-GO | **כן** | ר' §17 |
 | 1.7 | `WORK_ORDER_PROTOCOL.md` נאכף | PARTIAL | `PREFLIGHT_B10.md §5` — Commit #1 בוצע ללא PREFLIGHT קודם; מתועד | לא | `PREFLIGHT_B9.md` retroactive חסר (GOV-3) |
 | 1.8 | `CLAUDE.md` משקף את מבנה הריפו בפועל | PARTIAL | B-10 Commit #1 (`c2bfc4b`) תיקן את עץ הריפו | לא | S2/S3/S4 — ר' §1.9 |
-| 1.9 | אי-דיוקים ידועים ב-`CLAUDE.md` | **NOT YET FIXED** | S2: `RA-01…RA-23` בשורות 14+53, בפועל עד **RA-29** · S3: בלוק `docs/` מונה 11 מתוך 16 (חסר `RESEARCH_READINESS_REVIEW.md` בין השאר) · S4: `benchmarks/` נעדר מהעץ (4 קבצים tracked) | לא | **Commit #2 נפרד — טעון אישור Roy** |
-| 1.10 | `README.md` מעודכן | PARTIAL | `README:19` = "Stage A (B-1…B-7): Closed"; בפועל B-8/B-9/B-10 הושלמו | לא | עדכון |
+| 1.9 | אי-דיוקים ידועים ב-`CLAUDE.md` | **NOT YET FIXED** | S2: `RA-01…RA-23` בשורות 14+53, בפועל עד **RA-29** · S3: בלוק `docs/` מונה 11 מתוך 16 (חסר `RESEARCH_READINESS_REVIEW.md` בין השאר) · S4: `benchmarks/` נעדר מהעץ (4 קבצים tracked) — **לא טופלו ב-`7fc6454` (B-10 Commit #2 בפועל); אותו Commit עסק ב-README/ARCHITECTURE/PHASE_PLAN בלבד, לא ב-`CLAUDE.md`** | לא | **Commit נפרד עתידי — טעון אישור Roy** |
+| 1.10 | `README.md` מעודכן | COMPLETE | עודכן ב-`7fc6454` (B-10 Commit #2, D-088) — README משקף את סטטוס העבודה המתועד, כולל Stage A/B-8/B-9/B-10, מצב 39/39 חודשי הדאטה ומגבלת KI-010 | לא | — |
 | 1.11 | `PROJECT_STATE.md` — הכרעת גורל | **REQUIRES VERIFICATION** | ר' **U3** למטה | לא | הכרעת Roy |
 
 - [ ] **1. Governance** — `PARTIAL`. חוסמים: 1.5, 1.6.
