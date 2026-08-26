@@ -32,7 +32,7 @@ from datetime import UTC, date, datetime
 
 from src.backtest.context_snapshot import bar_to_json, ifvg_to_json, make_snapshot_row
 from src.backtest.portfolio_arm import PortfolioArm
-from src.core.types import TF, Bar, Order, Rejection, SetupEvent, Tick
+from src.core.types import TF, Bar, Order, Rejection, Setup, SetupEvent, Tick
 from src.data.spread_report import ExpandingSpreadReport
 from src.displacement.model import DisplacementModel
 from src.entry.setup_stream import SetupStream
@@ -109,6 +109,19 @@ class Orchestrator:
     # is NOT NULL -- unknown at Engagement) -- held here until the Setup's terminal
     # model-agnostic event writes the setups row they FK to. See _finalize_setup_journal.
     _pending_engagement_snapshots: dict[str, dict] = field(init=False)
+    # D-092: a Setup is only reachable through SetupStream's _active/_finished
+    # for as long as its own window-bounded state-machine lifetime lasts --
+    # _finished is a deliberate single-tick buffer (see setup_stream.py),
+    # cleared every step(). A filled order's resulting Trade, in contrast, can
+    # stay open (SL/TP) well past the Setup's own window close and eviction.
+    # Every field _record_snapshot needs from a Setup is already immutable by
+    # the time it reaches ARMED (r_bar/s_bar/ifvg/direction/fvg_id/etc. never
+    # change again), so caching the reference once here -- at the one moment
+    # it's guaranteed available -- is sufficient for a later "exit" snapshot
+    # to reproduce the exact same data get_setup() would have, had it still
+    # been reachable. Mirrors the existing _pending_engagement_snapshots
+    # pattern in this same class, not a new architectural idea.
+    _armed_setup_cache: dict[str, Setup] = field(init=False)
 
     def __post_init__(self) -> None:
         """Wire the shared engines. One StateStore/SetupStream for the whole run."""
@@ -127,6 +140,7 @@ class Orchestrator:
         self.setup_stream = SetupStream()
         self._pending_by_setup = defaultdict(list)
         self._pending_engagement_snapshots = {}
+        self._armed_setup_cache = {}
         # Every EntryModel's get_setup must resolve through *this* run's SetupStream --
         # there is no legitimate reason for a caller to wire a different one, and
         # leaving this to every caller was pure duplicated glue (KI-016 cleanup).
@@ -222,6 +236,11 @@ class Orchestrator:
                     self._buffer_engagement_snapshot(ts, ctx, event.setup_id)
                 elif event.kind == "armed" and not event.post_arm:
                     self._finalize_setup_journal(event.setup_id, ts)
+                    # D-092: cache now, while still guaranteed reachable --
+                    # see the field's own docstring above for why.
+                    self._armed_setup_cache[event.setup_id] = self.setup_stream.get_setup(
+                        event.setup_id
+                    )
                     self._record_snapshot("armed", ts, ctx, event.setup_id)
                     if in_window and not in_blackout:
                         self._open_orders_for_event(event, ctx, result)
@@ -302,10 +321,20 @@ class Orchestrator:
 
         engagement/armed (order=None, model-agnostic) or entry/exit (order
         required, per-arm) -- see src/backtest/context_snapshot.py (D-058).
+
+        D-092: checks ``_armed_setup_cache`` first. By the time an "exit"
+        snapshot is due, the Setup's window may have long since closed and
+        it may no longer be reachable through SetupStream's _active/_finished
+        (a deliberate single-tick buffer -- see setup_stream.py). Every field
+        the snapshot needs is already immutable by ARM time, so the cached
+        reference reproduces exactly what get_setup() would have returned had
+        it still been reachable. "engagement"/"armed"/"entry" are all still
+        provably safe to fetch live and fall through to that path unchanged
+        (the cache is only populated once a Setup reaches ARMED).
         """
         if self.journal is None:
             return
-        setup = self.setup_stream.get_setup(setup_id)
+        setup = self._armed_setup_cache.get(setup_id) or self.setup_stream.get_setup(setup_id)
         self.journal.record(
             "context_snapshots", make_snapshot_row(kind, ts, ctx, setup, order)
         )
