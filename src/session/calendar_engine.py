@@ -9,7 +9,8 @@ synthetic fixtures now (AT-3.9). ``in_blackout`` doubles directly as the
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from bisect import bisect_left, bisect_right
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
 from src.core.types import NewsEvent
@@ -23,6 +24,13 @@ class CalendarEngine:
     events: tuple[NewsEvent, ...]
     blackout_before: timedelta
     blackout_after: timedelta
+    # Derived index for in_blackout()'s O(log n) lookup (D-093 perf follow-up). Built from
+    # self.events, sorted here rather than trusting caller order -- from_config() only
+    # filters, it does not sort, so this must not assume events already arrive sorted.
+    _sorted_ts: tuple[datetime, ...] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_sorted_ts", tuple(sorted(e.ts_utc for e in self.events)))
 
     @classmethod
     def from_config(
@@ -42,11 +50,16 @@ class CalendarEngine:
         )
 
     def in_blackout(self, ts: datetime) -> bool:
-        """Whether ``ts`` falls inside any filtered event's ±blackout window."""
-        return any(
-            e.ts_utc - self.blackout_before <= ts <= e.ts_utc + self.blackout_after
-            for e in self.events
-        )
+        """Whether ``ts`` falls inside any filtered event's ±blackout window.
+
+        Equivalent to ``any(e.ts_utc - blackout_before <= ts <= e.ts_utc + blackout_after
+        for e in events)``, rearranged to ``ts - blackout_after <= e.ts_utc <= ts +
+        blackout_before`` (valid since blackout_before/after are fixed, not per-event) and
+        answered via a range check on the sorted timestamp index instead of a linear scan.
+        """
+        left = bisect_left(self._sorted_ts, ts - self.blackout_after)
+        right = bisect_right(self._sorted_ts, ts + self.blackout_before)
+        return right > left
 
     def blackout_intervals_utc(self) -> list[tuple[datetime, datetime]]:
         """Each filtered event's raw [start, end) blackout interval, unmerged, any order."""

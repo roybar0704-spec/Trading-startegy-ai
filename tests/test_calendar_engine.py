@@ -73,3 +73,44 @@ def test_effective_window_minutes_overlapping_blackouts_not_double_counted():
     )
     # merged blackout = [13:00,14:10) UTC; window = [13:30,15:30) UTC -> overlap = 40min
     assert effective_window_minutes(SESSION, cal, date(2024, 1, 10)) == 80
+
+
+def test_in_blackout_correct_with_unsorted_input_order():
+    # from_config() only filters, it does not sort -- in_blackout()'s indexed lookup must
+    # not assume the caller already sorted `events`. Deliberately out of chronological
+    # order (Mar, Jan, Feb) to prove the internal index is built correctly regardless.
+    events = _events(
+        ("2024-03-10T14:00:00+00:00", "USD", "red"),
+        ("2024-01-10T14:00:00+00:00", "USD", "red"),
+        ("2024-02-10T14:00:00+00:00", "USD", "red"),
+    )
+    cal = CalendarEngine.from_config(
+        events, currencies=("USD",), impacts=("red",),
+        blackout_before_min=30, blackout_after_min=30,
+    )
+    # Inside each event's window, regardless of the event's position in the input list.
+    assert cal.in_blackout(datetime(2024, 1, 10, 14, 0, tzinfo=UTC))
+    assert cal.in_blackout(datetime(2024, 2, 10, 14, 0, tzinfo=UTC))
+    assert cal.in_blackout(datetime(2024, 3, 10, 14, 0, tzinfo=UTC))
+    # Between events -- not in any window.
+    assert not cal.in_blackout(datetime(2024, 1, 25, 12, 0, tzinfo=UTC))
+    # Before the earliest and after the latest event.
+    assert not cal.in_blackout(datetime(2023, 12, 1, tzinfo=UTC))
+    assert not cal.in_blackout(datetime(2024, 6, 1, tzinfo=UTC))
+
+
+def test_in_blackout_duplicate_timestamps():
+    # Two events at the identical instant must not break the bisect range lookup.
+    events = _events(
+        ("2024-01-10T14:00:00+00:00", "USD", "red"),
+        ("2024-01-10T14:00:00+00:00", "USD", "red"),
+    )
+    cal = CalendarEngine.from_config(
+        events, currencies=("USD",), impacts=("red",),
+        blackout_before_min=30, blackout_after_min=30,
+    )
+    assert cal.in_blackout(datetime(2024, 1, 10, 14, 0, tzinfo=UTC))
+    assert cal.in_blackout(datetime(2024, 1, 10, 13, 30, tzinfo=UTC))  # exact lower boundary
+    assert cal.in_blackout(datetime(2024, 1, 10, 14, 30, tzinfo=UTC))  # exact upper boundary
+    assert not cal.in_blackout(datetime(2024, 1, 10, 13, 29, tzinfo=UTC))
+    assert not cal.in_blackout(datetime(2024, 1, 10, 14, 31, tzinfo=UTC))
