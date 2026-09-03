@@ -8,8 +8,7 @@ measurement.
 
 from __future__ import annotations
 
-import statistics
-from collections import defaultdict
+import heapq
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
@@ -107,6 +106,44 @@ def build_spread_report(ticks: pl.DataFrame, symbol: str) -> SpreadReport:
     return SpreadReport(symbol=symbol, by_hour=by_hour)
 
 
+class _HeapMedian:
+    """Streaming median via two balanced heaps (perf follow-up to D-093).
+
+    ``_lo`` is a max-heap (values stored negated, since ``heapq`` is min-heap-only)
+    holding the lower half of everything pushed so far; ``_hi`` is a min-heap holding
+    the upper half. Invariant maintained after every ``push()``: ``len(_lo)`` is
+    always ``len(_hi)`` or ``len(_hi) + 1``.
+
+    ``median()`` reproduces exactly what ``statistics.median()`` would return for the
+    same accumulated values: the single top of ``_lo`` for an odd count, or
+    ``(lower_middle + upper_middle) / 2`` -- the same operand order ``statistics``
+    itself uses -- for an even count. IEEE-754 addition is commutative for exactly
+    two operands, so this order choice does not, by itself, introduce any float
+    discrepancy versus the original implementation.
+    """
+
+    __slots__ = ("_hi", "_lo")
+
+    def __init__(self) -> None:
+        self._lo: list[float] = []
+        self._hi: list[float] = []
+
+    def push(self, value: float) -> None:
+        if not self._lo or value <= -self._lo[0]:
+            heapq.heappush(self._lo, -value)
+        else:
+            heapq.heappush(self._hi, value)
+        if len(self._lo) > len(self._hi) + 1:
+            heapq.heappush(self._hi, -heapq.heappop(self._lo))
+        elif len(self._hi) > len(self._lo):
+            heapq.heappush(self._lo, -heapq.heappop(self._hi))
+
+    def median(self) -> float:
+        if len(self._lo) > len(self._hi):
+            return -self._lo[0]
+        return (-self._lo[0] + self._hi[0]) / 2
+
+
 @dataclass
 class ExpandingSpreadReport:
     """Point-in-time-correct median-spread tracker for live backtest decisions.
@@ -126,10 +163,15 @@ class ExpandingSpreadReport:
 
     No Rolling (fixed trailing window) variant is implemented: the Expanding variant was
     chosen for v1 specifically because it needs no additional declared RA/parameter.
+
+    Internally backed by a per-hour ``_HeapMedian`` (perf follow-up to D-093) instead of
+    a per-hour ``list[float]`` re-sorted on every query -- ``update()``/``median_spread()``
+    keep their exact public signatures and return values; only the O(n log n)-per-query
+    internal cost is replaced with O(log n) push / O(1) query.
     """
 
     symbol: str
-    _spreads_by_hour: dict[int, list[float]] = field(default_factory=lambda: defaultdict(list))
+    _trackers: dict[int, _HeapMedian] = field(default_factory=dict)
 
     @classmethod
     def warm_start(cls, symbol: str, ticks: list[Tick]) -> ExpandingSpreadReport:
@@ -148,7 +190,11 @@ class ExpandingSpreadReport:
     def update(self, tick: Tick) -> None:
         """Record one more observed spread. Call this, and only this, to grow the tracker."""
         hour_et = tick.ts.astimezone(_ET).hour
-        self._spreads_by_hour[hour_et].append(tick.ask - tick.bid)
+        tracker = self._trackers.get(hour_et)
+        if tracker is None:
+            tracker = _HeapMedian()
+            self._trackers[hour_et] = tracker
+        tracker.push(tick.ask - tick.bid)
 
     def median_spread(self, hour_et: int) -> float:
         """Median spread (USD) for ET hour, from ticks observed so far.
@@ -157,10 +203,10 @@ class ExpandingSpreadReport:
         surface (CLAUDE.md: no silent fallback on data gaps), not a bug to hide behind
         a default value that would itself be an unrecorded research assumption.
         """
-        spreads = self._spreads_by_hour.get(hour_et)
-        if not spreads:
+        tracker = self._trackers.get(hour_et)
+        if tracker is None:
             raise KeyError(
                 f"ExpandingSpreadReport: no spread observations yet for ET hour {hour_et} "
                 "(D-049 forbids falling back to a full-period or future-inclusive value)."
             )
-        return statistics.median(spreads)
+        return tracker.median()
