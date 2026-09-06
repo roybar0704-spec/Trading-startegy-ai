@@ -135,6 +135,12 @@ class StateStore:
             elif obj.invalidated_at is None and was_invalidated_before:
                 self._close_invalidation_interval(obj.id, obj.confirmed_at)
         elif isinstance(obj, BiasEvent):
+            if self._bias_events and obj.ts < self._bias_events[-1].ts:
+                raise _OutOfOrderIndexWrite(
+                    f"StateStore: BiasEvent received out-of-order timestamp {obj.ts!r} < "
+                    f"last-recorded {self._bias_events[-1].ts!r}. put() must be called in "
+                    "non-decreasing timestamp order for BiasEvents; not silently sorted."
+                )
             self._bias_events.append(obj)
         else:
             raise TypeError(f"StateStore.put: unsupported object type {type(obj)!r}")
@@ -369,6 +375,11 @@ class StateStore:
         """Full, chronological history of Bias *transitions* recorded so far."""
         return list(self._bias_events)
 
+    def _bias_state_as_of(self, ts: datetime) -> BiasState:
+        """O(log n) equivalent of the current linear scan over _bias_events."""
+        idx = bisect.bisect_right(self._bias_events, ts, key=lambda e: e.ts) - 1
+        return self._bias_events[idx].state if idx >= 0 else "neutral"
+
     def median_spread(self, hour_et: int) -> float:
         """Median spread (USD) for an ET hour, from the SpreadReport wired into this store."""
         if self._spread_report is None:
@@ -407,8 +418,7 @@ class MarketContext:
 
     def bias(self) -> BiasState:
         """The Bias state as of ``now`` (docs/SPEC_V1_FROZEN.md §3)."""
-        visible = [e for e in self._store.bias_history() if e.ts <= self.now]
-        return visible[-1].state if visible else "neutral"
+        return self._store._bias_state_as_of(self.now)
 
     def active_fvgs(self, tf: TF, direction: str) -> list[FVG]:
         """Confirmed, not-yet-100%-mitigated FVGs on ``tf``/``direction`` as of ``now``.
