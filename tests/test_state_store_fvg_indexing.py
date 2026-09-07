@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from src.core.types import TF, Bar
-from src.store.state_store import BiasEvent, StateStore, _OutOfOrderIndexWrite
+from src.store.state_store import StateStore, _OutOfOrderIndexWrite
 from tests.fixtures.bars import make_bars
 from tests.fixtures.pipeline import run_pipeline
 
@@ -86,8 +86,12 @@ def _build_multi_version_store() -> StateStore:
     chronological order (the real engines' own write pattern)."""
     store = StateStore()
     specs = [
-        # (id, tf, direction, confirmed_at_minute, versions: list of (ts_minute, mitigation_pct, invalidated))
-        ("FVG-A", TF.H4, "bull", 0, [(0, 0.0, False), (10, 25.0, False), (20, 60.0, False), (30, 100.0, True)]),
+        # (id, tf, direction, confirmed_at_minute,
+        #  versions: list of (ts_minute, mitigation_pct, invalidated))
+        (
+            "FVG-A", TF.H4, "bull", 0,
+            [(0, 0.0, False), (10, 25.0, False), (20, 60.0, False), (30, 100.0, True)],
+        ),
         ("FVG-B", TF.H4, "bear", 5, [(5, 0.0, False)]),
         ("FVG-C", TF.H4, "bull", 8, [(8, 0.0, False), (40, 100.0, True)]),
         ("FVG-D", TF.M1, "bull", 2, [(2, 0.0, False), (15, 50.0, False)]),
@@ -296,7 +300,8 @@ def test_single_reentry_cycle_matches_naive_at_every_stage():
     assert store._active_fvgs_indexed(_dt(-1), TF.H4, "bull") == []
     assert [f.id for f in store._active_fvgs_indexed(_dt(5), TF.H4, "bull")] == ["FVG-R"]
     assert store._active_fvgs_indexed(_dt(15), TF.H4, "bull") == []  # invalidated epoch
-    assert [f.id for f in store._active_fvgs_indexed(_dt(25), TF.H4, "bull")] == ["FVG-R"]  # reactive
+    # reactive
+    assert [f.id for f in store._active_fvgs_indexed(_dt(25), TF.H4, "bull")] == ["FVG-R"]
 
 
 def test_multiple_reentry_cycles_match_naive():
@@ -381,7 +386,8 @@ def test_randomized_equivalence_sweep_with_reentry_cycles():
         store = StateStore()
         n_ids = rng.randint(1, 10)
         t = 0
-        all_writes = []  # (ts_min, fvg_id, tf, direction, is_reconfirm_epoch_start, mitigation_pct, invalidated)
+        # (ts_min, fvg_id, tf, direction, is_reconfirm_epoch_start, mitigation_pct, invalidated)
+        all_writes = []
         for i in range(n_ids):
             fvg_id = f"FVG-RR{trial}-{i}"
             tf = rng.choice([TF.H4, TF.M1])
@@ -433,7 +439,6 @@ def test_randomized_equivalence_sweep():
     for trial in range(50):
         store = StateStore()
         n_ids = rng.randint(1, 15)
-        events = []  # (kind, ts) to keep global write order chronological
         t = 0
         specs = []
         for i in range(n_ids):
@@ -447,7 +452,9 @@ def test_randomized_equivalence_sweep():
             for v in range(n_versions):
                 last_t += rng.randint(1, 5)
                 will_invalidate = (v == n_versions - 1) and rng.random() < 0.6
-                versions.append((last_t, 100.0 if will_invalidate else rng.uniform(0, 90), will_invalidate))
+                versions.append(
+                    (last_t, 100.0 if will_invalidate else rng.uniform(0, 90), will_invalidate)
+                )
             specs.append((f"FVG-R{trial}-{i}", tf, direction, confirmed_at, versions))
             t = last_t
 
@@ -586,10 +593,12 @@ def _pipeline_snapshot(store: StateStore, ts: datetime) -> dict:
     ctx = store.as_of(ts)
     return {
         "fvgs_bull_ordered": [
-            (f.id, f.top, f.bottom, f.level, f.mitigation_pct) for f in ctx.active_fvgs(TF.H4, "bull")
+            (f.id, f.top, f.bottom, f.level, f.mitigation_pct)
+            for f in ctx.active_fvgs(TF.H4, "bull")
         ],
         "fvgs_bear_ordered": [
-            (f.id, f.top, f.bottom, f.level, f.mitigation_pct) for f in ctx.active_fvgs(TF.H4, "bear")
+            (f.id, f.top, f.bottom, f.level, f.mitigation_pct)
+            for f in ctx.active_fvgs(TF.H4, "bear")
         ],
     }
 
@@ -629,9 +638,14 @@ def test_real_pipeline_indexed_matches_naive_including_order():
 def test_orchestrator_canonical_journal_hash_unchanged_old_vs_new(tmp_path, monkeypatch):
     from datetime import timedelta as _td
 
-    from src.journal.duckdb_writer import DuckDBJournal
     from src.core.types import Tick
-    from tests.fixtures.orchestrator import IN_WINDOW, make_arm, make_orchestrator, seed_fvg_and_bias
+    from src.journal.duckdb_writer import DuckDBJournal
+    from tests.fixtures.orchestrator import (
+        IN_WINDOW,
+        make_arm,
+        make_orchestrator,
+        seed_fvg_and_bias,
+    )
     from tests.fixtures.setup_stream import m1, m5
     from tests.test_at3_14_determinism import SCHEMA_PATH, _canonical_export
 
@@ -660,7 +674,9 @@ def test_orchestrator_canonical_journal_hash_unchanged_old_vs_new(tmp_path, monk
             if use_naive:
                 m.setattr(
                     "src.store.state_store.MarketContext.active_fvgs",
-                    lambda self, tf, direction: _naive_active_fvgs(self._store, self.now, tf, direction),
+                    lambda self, tf, direction: _naive_active_fvgs(
+                        self._store, self.now, tf, direction
+                    ),
                 )
             orch.run()
         return _canonical_export(db_path)

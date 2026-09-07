@@ -53,8 +53,9 @@ def _fvg_effective_ts(fvg: FVG) -> datetime:
 
 
 class _OutOfOrderIndexWrite(RuntimeError):
-    """Raised when a D-093 supplementary FVG index update would go backwards
-    in time -- either the global per-tf confirm index, or a single id's own
+    """Raised when a D-093 supplementary FVG index update would go backwards in time.
+
+    Either the global per-tf confirm index, or a single id's own
     invalidation-interval list.
 
     D-093 (perf): the ``_fvg_confirm_events``/``_fvg_invalidation_intervals``
@@ -358,7 +359,10 @@ class StateStore:
                 continue
             if version.direction != direction:
                 continue
-            if not (version.confirmed_at <= ts and (version.invalidated_at is None or version.invalidated_at > ts)):
+            if not (
+                version.confirmed_at <= ts
+                and (version.invalidated_at is None or version.invalidated_at > ts)
+            ):
                 continue
             result.append(version)
         return result

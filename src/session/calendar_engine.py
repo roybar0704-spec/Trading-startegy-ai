@@ -30,6 +30,7 @@ class CalendarEngine:
     _sorted_ts: tuple[datetime, ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        """Build ``_sorted_ts`` from ``self.events``, sorted regardless of caller order."""
         object.__setattr__(self, "_sorted_ts", tuple(sorted(e.ts_utc for e in self.events)))
 
     @classmethod
