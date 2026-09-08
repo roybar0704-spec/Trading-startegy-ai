@@ -38,7 +38,9 @@ from __future__ import annotations
 import argparse
 import ctypes
 import ctypes.wintypes
+import hashlib
 import json
+import platform
 import sys
 import time
 import traceback
@@ -70,6 +72,8 @@ from src.data.holdout import XAUUSD_HOLDOUT_RANGE  # noqa: E402
 from src.data.tick_store import TickParquetStore, months_between  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+_RULES_HASH_PATH = REPO_ROOT / "config" / "rules_v1.yaml.sha256"
+_UV_LOCK_PATH = REPO_ROOT / "uv.lock"
 SYMBOL = "XAUUSD"
 
 # D-073 pattern (mirrors run_full_spread_report.py, B-4): last calendar month
@@ -154,6 +158,39 @@ def peak_rss_mb() -> float:
     if sys.platform == "win32":
         return _peak_rss_mb_windows()
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+
+
+def _read_rules_hash() -> str | None:
+    """Read the frozen rules_v1.yaml.sha256 sidecar."""
+    if not _RULES_HASH_PATH.exists():
+        return None
+    return _RULES_HASH_PATH.read_text(encoding="utf-8").strip()
+
+
+def _uv_lock_hash() -> str | None:
+    """SHA-256 of uv.lock content."""
+    if not _UV_LOCK_PATH.exists():
+        return None
+    return hashlib.sha256(_UV_LOCK_PATH.read_bytes()).hexdigest()
+
+
+def _collect_provenance(orch, identity: RunIdentity) -> dict:
+    """Provenance fields already resolved by build_orchestrator() (code_version/
+    config_hash) or already computed earlier in main() (identity.data_version) --
+    reused as-is, never recomputed. Must only be called after elapsed_seconds/
+    rss_mb are already captured, so nothing here affects the timed measurement."""
+    return {
+        "benchmark_schema_version": 1,
+        "code_version": orch.code_version,
+        "git_dirty": orch.code_version.endswith("+dirty"),
+        "config_hash": orch.config_hash,
+        "dataset_version": identity.data_version,
+        "rules_hash": _read_rules_hash(),
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "uv_lock_hash": _uv_lock_hash(),
+        "seed": identity.seed,
+    }
 
 
 def _parse_year_month(s: str) -> tuple[int, int]:
@@ -340,6 +377,7 @@ def main() -> int:
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    provenance = _collect_provenance(orch, identity)
     payload = {
         "measured_at": datetime.now(UTC).isoformat(),
         "data_source": "real (TickParquetStore, D-073-guarded, excludes Hold-Out)",
@@ -359,6 +397,7 @@ def main() -> int:
             "orders_rejected": result.orders_rejected, "fills": result.fills,
             "orders_cancelled": result.orders_cancelled,
         },
+        "provenance": provenance,
         "note": (
             "Diagnostic-only (B-8 Pre-Flight). NOT T3.4, not a declared Experiment, "
             "journal=None (no data/registry/runs.jsonl write). Does not close any "
