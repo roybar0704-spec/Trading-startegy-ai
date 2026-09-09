@@ -1,0 +1,1444 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260811180030
+Username: DESKTOP-FLTJTEB\User
+RunAs User: DESKTOP-FLTJTEB\User
+Configuration Name: 
+Machine: DESKTOP-FLTJTEB (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 22348
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is docgate_step4.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== Q1. IMPORT-LINTER CONTRACTS = machine-readable ARCHITECTURE ===" -ForegroundColor Cyan
+
+=== Q1. IMPORT-LINTER CONTRACTS = machine-readable ARCHITECTURE ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:pyproject.toml | Select-String -Pattern 'importlinter|contract|layers|^\[|dev\s*=|optional-dependencies' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| [project]
+  20| [project.optional-dependencies]
+  21| dev = [
+  29| [build-system]
+  33| [tool.hatch.build.targets.wheel]
+  36| [tool.pytest.ini_options]
+  40| [tool.ruff]
+  45| [tool.ruff.lint]
+  49| [tool.ruff.lint.per-file-ignores]
+  53| [tool.ruff.lint.pydocstyle]
+  56| [tool.ruff.lint.isort]
+  63| # named module to exist, so contracts are added module-by-module as each
+  66| [tool.importlinter]
+  69| [[tool.importlinter.contracts]]
+  75| [[tool.importlinter.contracts]]
+  81| [[tool.importlinter.contracts]]
+  90| [[tool.importlinter.contracts]]
+  92| type = "layers"
+  93| layers = [
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== Q2. FULL TESTS LIST (closes PRJ-3) ===" -ForegroundColor Cyan
+
+=== Q2. FULL TESTS LIST (closes PRJ-3) ===
+PS C:\Users\User\Trading-startegy-ai> git ls-tree -r --name-only f9a8d22 -- tests
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== Q3. PHASE_PLAN — does it scope stats/validation/tracker/ai? (closes DG-7) ===" -ForegroundColor Cyan
+
+=== Q3. PHASE_PLAN — does it scope stats/validation/tracker/ai? (closes DG-7) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/PHASE_PLAN.md | Select-String -Pattern '^#{1,6}\s|Phase|stats|validation|tracker|scoring|ai |Research' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| # PHASE PLAN
+   2| כלל: Phase נסגר רק כשמתקיימים ארבעתם — (א) כל בדיקות הקבלה ירוקות, (ב) **תוצר עובד הודגם למשתמש** (Working Software Rule, טבלת "תוצרי עבודה" בתחתית), (ג) **כל ששת ה-Quality Gates ירוקים** (QUALITY_GATES.md), (ד) אישור משתמש. אין התחלת Phase הבא לפני כן.
+   4| ## Phase 0 — Data Pipeline
+  14| - **תת-שער דאטה (פתוח, KI-001/KI-002):** 3 שנות דאטה אמיתי נקיות + דו"ח ספרד אמיתי מוצג למשתמש + כיול RA-10 — טרם קיימים (סביבת הפיתוח חוסמת רשת ל-Dukascopy). **אינו חוסם Phase 1–2** (הבדיקות שלהם מתוכננות על Fixtures סינתטיים לפי ACCEPTANCE_TESTS.md ואינן תלויות בדאטה אמיתי). **חוסם באופן מוחלט את T3.4 ואת Phase 4–5** — ר' "Research Readiness Review" לפני Phase 3 למטה.
+  16| ## Phase 1 — State Store + Structure Engines
+  26| ## Phase 2 — Execution Layer
+  32| **Gate: Green-Conditional (סגור, 2026-07-09, באישור משתמש, בדפוס D-036):** AT-2.1–AT-2.8 ירוקות (48/48 בבדיקה מלאה כולל Phase 0–1); כל שאר חמשת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase2.py`) רץ מקצה-לקצה. **התנאי:** KI-001 ו-KI-007 (שניהם `high`) נשארים פתוחים אך **אינם חוסמים** את סגירת Phase 2 עצמה — הם הופכים לחוסמים מחייבים לפני T3.4 (Research Readiness Review, D-037). KI-006 ו-KI-007 נקבעו כחלק מחייב מעיצוב ה-Orchestrator הראשוני (T3.3), לא כ-Refactor מאוחר.
+  34| ## Phase 3 — End-to-End צר (M2 × S_body בלבד)
+  39| **⛔ שער חובה לפני T3.4 — Research Readiness Review (D-037):** ריצת בקטסט אמיתית ראשונה (T3.4) אסורה עד שהושלמה סקירת מוכנות-מחקר מסודרת ומתועדת לפי `docs/RESEARCH_READINESS_REVIEW.md`. אם סעיף כלשהו בסקירה נכשל — עוצרים את הפרויקט לפני T3.4 ומפיקים דוח מפורט במקום להמשיך. אין לדלג על השער הזה גם אם הבדיקות הטכניות (pytest/ruff) ירוקות.
+  41| - T3.4 ריצה מלאה על 3 חודשי In-Sample עם זרוע אחת: M2 × S_body. **דורש Research Readiness Review = GO.**
+  44| **Gate (קודי): Green-Conditional (סגור, 2026-07-10, באישור משתמש, בדפוס D-036/D-051):** T3.1–T3.3, T3.5, T3.6 מומשו במלואם; 127/127 בדיקות ירוקות; כל ששת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase3.py`) רץ מקצה-לקצה כולל Viz+Journal; Critical Review עצמאי מלא בוצע (ר' D-062–D-064) ואומת בפועל — לא רק בקריאת-קוד — כולל תרחיש-פייפליין-מלא מ-4H גולמי ללא זריעה (KI-020, סגור). **התנאי (חוסם רק את T3.4 ואת השער המלא, לא את סגירת הצד הקודי):** T3.4 (ריצה אמיתית) ו-AT-3.10 (20 עסקאות מדגם) דורשים Research Readiness Review = GO, שדורש בעצמו גישת רשת אמיתית ל-Dukascopy (KI-001) ולוח חדשות אמיתי (KI-010) — שניהם חסומי-סביבה, לא חסרי-קוד. ר' `docs/RESEARCH_READINESS_REVIEW.md`.
+  46| **Gate (מלא, לא-סגור עדיין):** AT-3.*; **20 עסקאות מדגם מאומתות ידנית על הגרף מול היומן** + אישור משתמש שהלוגיקה = הכוונה. חסום ע"י Research Readiness Review (KI-001/KI-010).
+  48| ## Phase 4 — כל הזרועות + סטטיסטיקה
+  51| - T4.3 Scoring Log-Only.
+  53| - T4.5 Analytics API: ‏`stats.by(feature, metric)` — סינון/קיבוץ/השוואה גנרי לכל Feature. חובה ב-Demo: ‏WR לפי Bias, TS מול בלי-TS, Expectancy לפי שעה ויום, Profit לפי Entry/Stop Model.
+  56| ## Phase 5 — Validation & Research Protocol
+  61| - T5.5 Experiment Tracker: config_hash, Append-Only, פונקציית מטרה נעולה.
+  64| ## Phase 6 — AI Analyst + Viz מלא
+  65| - T6.1 AI Analyst: ניתוח טרום-סשן מובנה מ-Snapshot; תיוג עסקאות; Insights. Read-Only.
+  69| ## אחרי Phase 5 בלבד: ריצות המחקר האמיתיות לפי הפרוטוקול → הכרעת זרועות → נעילת v1.2.
+  71| ## תוצרי עבודה — Working Software Rule
+  72| | Phase | Demo | מה המשתמש רואה |
+  74| | 0 | `scripts/demo_phase0.py --month 2024-03` | טעינת חודש דאטה, דו"ח ולידציה, דו"ח ספרד לפי שעה, נרות 4H מיושרי NY-Close |
+  75| | 1 | `scripts/demo_phase1.py --period ...` | גרף אינטראקטיבי: Swings, BOS, Sweeps, ציר Bias, FVG L1–L3 מסומנים על תקופת מדגם |
+  76| | 2 | `scripts/demo_phase2.py` | דו"ח תרחישי מילוי: Limit / Market / SL-First / Gap-Through / Sizing — מול חישוב יד |
+  77| | 3 | `scripts/demo_phase3.py` | עסקאות M2×S_body על הגרף: R, S, iFVG, Entry, SL, TP + היומן המלא |
+  78| | 4 | `scripts/demo_phase4.py` | דשבורד השוואת 9 הזרועות על In-Sample |
+  79| | 5 | `scripts/demo_phase5.py` | דו"ח Walk-Forward + Baseline + p-value + הוכחת Reproducibility |
+  80| | 6 | `scripts/demo_phase6.py` | ניתוח AI טרום-סשן לדוגמה + דשבורד מלא |
+  82| הערה: הדוגמאות "לראות זיהוי FVG" ו"לראות Market Structure" חיות שתיהן ב-Demo של Phase 1 — שני המנועים נבנים באותו שלב ומודגמים יחד על אותו גרף.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== Q4. CLAUDE.md REPO TREE 31..67 RAW (closes DG-5) ===" -ForegroundColor Cyan
+
+=== Q4. CLAUDE.md REPO TREE 31..67 RAW (closes DG-5) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:CLAUDE.md | Select-Object -Skip 30 -First 37 | ForEach-Object -Begin {$i=31} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+  31| ## מבנה הריפו
+  32| ```
+  33| xauusd-research/
+  34| ├── CLAUDE.md
+  35| ├── HANDOFF_MASTER.md                # אינדקס-על — מקור האמת היחיד של הפרויקט
+  36| ├── README.md · pyproject.toml            (נוצרים ב-Phase 0)
+  37| ├── config/
+  38| │   ├── rules_v1.yaml        # FROZEN — אסור לערוך
+  39| │   ├── parameters.yaml      # פרמטרים + Grids מוצהרים
+  40| │   └── run_default.yaml
+  41| ├── docs/
+  42| │   ├── SPEC_V1_FROZEN.md · ARCHITECTURE.md · PHASE_PLAN.md
+  43| │   ├── ACCEPTANCE_TESTS.md · INTERFACES.md · FUTURE_EXPERIMENTS.md
+  44| │   ├── RESEARCH_ASSUMPTIONS_V1.md   # RA-01…RA-23 — בחירות התחלתיות, לא חוקים
+  45| │   ├── FEATURE_SPEC_V1.md           # Feature Store — עסקה = וקטור Features
+  46| │   ├── QUALITY_GATES.md             # ששת שערי האיכות — תנאי סגירת Phase
+  47| │   ├── KNOWN_ISSUES.md              # מעקב תקלות — Functional Gate
+  48| │   └── DECISIONS_LOG.md             # יומן החלטות — חובת עדכון שוטפת
+  49| ├── db/schema.sql
+  50| ├── src/
+  51| │   ├── data/         # provider · dukascopy_downloader · bar_builder · validator
+  52| │   ├── store/        # state_store · market_context
+  53| │   ├── structure/    # fractals · bos · sweep · bias
+  54| │   ├── fvg/          # detector · mitigation · ranking · ifvg
+  55| │   ├── displacement/ # d1_body · d2_tickvol · d3_atr · d4_consec · d5_composite
+  56| │   ├── session/      # session_engine · calendar_engine
+  57| │   ├── entry/        # setup_stream (State Machine) · m1 · m2 · m4
+  58| │   ├── risk/         # sizing · quota · geometry
+  59| │   ├── execution/    # fill_simulator · cost_model
+  60| │   ├── backtest/     # orchestrator · events · portfolios
+  61| │   ├── journal/      # duckdb_writer
+  62| │   ├── features/     # Feature Store: registry · extractors · snapshots
+  63| │   ├── stats/ · validation/ · tracker/ · scoring/ · ai/ · viz/
+  64| ├── tests/            # fixtures/ + בדיקות לפי ACCEPTANCE_TESTS.md
+  65| └── data/             # gitignored; ticks/ · bars/ · holdout/ (מופרד פיזית)
+  66| ```
+  67|
+PS C:\Users\User\Trading-startegy-ai> [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+PS C:\Users\User\Trading-startegy-ai> Start-Transcript -Path "docgate_step5.txt" -Force
+Transcript started, output file is docgate_step5.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R1. KNOWN_ISSUES — KI-001/002/010 status (closes DG-9) ===" -ForegroundColor Cyan
+
+=== R1. KNOWN_ISSUES — KI-001/002/010 status (closes DG-9) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/KNOWN_ISSUES.md | Select-String -Pattern 'KI-001|KI-002|KI-010|KI-01[3-9]|KI-02' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   6| | KI-001 | סביבת הפיתוח (Claude Code sandbox) חוסמת גישת רשת ל-`datafeed.dukascopy.com` (403 ברמת ה-egress proxy). לא ניתן להוריד 3 שנות Ticks אמיתיים, לא ניתן להפיק דו"ח ספרד אמיתי לכיול RA-10/min_stop, ולא ניתן להריץ AT-0.1/AT-0.2/AT-0.7 מול דאטה אמיתי (רק מול Fixtures סינתטיים שמדמים את פורמט ה-wire במדויק). כל שאר T0.1–T0.6 מומשו ונבדקו במלואם. **נסגר (D-069):** Root cause = client fingerprint (User-Agent/headers/ALPN), לא IP/נפח-בקשות — מאומת בניסוי מבוקר (`scripts/diagnostics/test_h1_fingerprint.py`). תוקן ב-Production דרך הזרקת `BrowserLikeTransport` (`src/data/browser_transport.py`) ל-`DukascopyDownloader` הקיים ללא שינויו; אומת End-to-End על חודש שלם אמיתי (נובמבר 2022, 720/0/0 = transport_calls/429s/errors). | high | data | Phase 0 / 2026-07-08 | closed (ר' D-069) |
+   7| | KI-002 | `point_value=0.001` (סקאלת המרת המספר השלם הגולמי במבנה ה-tick של Dukascopy למחיר USD עבור XAUUSD) מבוסס על מוסכמה ציבורית מוכרת בכלי Dukascopy קוד-פתוח, אך לא אומת מול הורדה אמיתית (ר' KI-001). דורש אימות בפעם הראשונה שיש גישת רשת אמיתית. **נסגר (D-070):** אומת מול דאטה אמיתי (נובמבר 2022, 3,641,776 ticks) — טווח מחירים שפוענח תואם היסטורית באופן מדויק, כולל התאמה כמעט-לדולר לאירוע-שוק מתועד ומתוארך (15.11.2022). | medium | src/data/dukascopy_downloader.py | Phase 0 / 2026-07-08 | closed (ר' D-070) |
+  17| | KI-010 | לוח חדשות היסטורי אמיתי (RA-23: CSV, "אדום", USD בלבד) עדיין לא אותר/נבדק — Phase 0 (שהיה אמור לקבוע זמינות מקור, ר' RA-23) נחסם ע"י KI-001 (חסימת רשת כללית) ולא בדק ספציפית מקור ללוח חדשות (ייתכן שונה מ-Dukascopy). זהה ב-Design Review של Phase 3, לפני בניית `CalendarEngine` (T3.1). **אינו חוסם כתיבת/בדיקת קוד**: `CalendarEngine` ייבנה עצמאי-ממקור-נתונים (D-037) — צורך `list[NewsEvent]` מוזרק, בדיוק כמו `Tick`/`Bar`; AT-3.9 ירוץ מול Fixture סינתטי. **חוסם** את Research Readiness Review (T3.4) באותו אופן כמו KI-001 — Blackout אמיתי לא ניתן לחשב בלי לוח אמיתי. **Partially closed (Stage A / B-7, D-077, RA-23).** מקור BLS נבחר ומתועד (`KI010_DECISION_DOC.md`); `src/data/news_loader.py` (חדש) טוען CSV אמיתי (`data/news/bls_calendar.csv` — 66 `NewsEvent`, 33 CPI + 33 Employment Situation, `2022-10-07`…`2025-06-11`) ל-`list[NewsEvent]`; `CalendarEngine.from_config(...)` הקיים-והבלתי-משתנה הופעל מולו בפועל (לא Fixture סינתטי) מול `config/rules_v1.yaml::news_filter` ה-FROZEN — blackout ±30 דק' הוכח (exact/±15min=`True`, ±45min=`False`). **הבעיה המקורית (היעדר דאטה אמיתי, היעדר הוכחת אינטגרציה) נסגרה במלואה.** **נשאר פתוח (לא CLOSED מלא):** Coverage-סוגי-אירוע — Phase 1 מכסה 2 מתוך 7 סוגי-אירוע High-Impact-USD מוכרים (`KI010_DECISION_DOC.md` §3); `docs/SPEC_V1_FROZEN.md` שורה 67 מגדיר Blackout סביב "חדשות אדומות USD" גנרית — חסרים Core PCE, GDP, FOMC Rate Decision, ISM PMI, Retail Sales. Open Future Work — לא משויך ל-B-8; קשור ל-D-078 ותנאי-הפקיעה שלו (ר' D-084). | high | src/session/calendar_engine.py, src/data/news_loader.py, data/news/bls_calendar.csv | Phase 3 / 2026-07-09 | partially closed (ר' D-077, RA-23, D-084; Coverage Expansion = Open Future Work, לא B-8, קשור ל-D-078) |
+  21| | KI-013 | `trades.mae_r`/`mfe_r` (Maximum Adverse/Favorable Excursion, ב-R) נכתבים כ-`NULL` — דורשים מעקב תוך-עסקה אחר המחיר הקיצוני שהושג (טרם קיים ב-Orchestrator, ומיועד במפורש ל-T4.2 "MAE/MFE" לפי PHASE_PLAN.md). | low | src/backtest/orchestrator.py | Phase 3 / 2026-07-09 | open (ייסגר ב-T4.2, כמתוכנן) |
+  22| | KI-014 | מסלולי המילוי של M1 (Limit order) ו-M4 (נר-דחייה) דרך ה-Orchestrator המלא (Order → Fill בפועל) מכוסים רק ב-`tests/test_entry_models.py` (יחידה, ללא Orchestrator) או בתרחיש שאינו ממלא בפועל (M1 בבדיקת ה-Blackout-cancel ב-`test_orchestrator.py`). אף בדיקת Orchestrator קיימת לא מוכיחה את שני המסלולים האלה מקצה-לקצה עד Fill בפועל — רק M2 (Market מיידי) מוכח כך (`test_end_to_end_armed_setup_fills_and_closes_trade_updates_equity`). זוהה ב-Critical Review עצמי לפני דוח ההתקדמות של T3.1-T3.3. **תוקן (D-062, Critical Review סופי של Phase 3):** `tests/test_full_pipeline_9_arms.py` מוכיח את שלושת מודלי הכניסה (M1 Limit, M2 Market, M4 נר-דחייה) ממלאים בפועל, כל אחד בזרוע נפרדת, באותה ריצת Orchestrator אחת עם 9 התיקים המלאים דרך `build_orchestrator`. | medium | tests/test_full_pipeline_9_arms.py | Phase 3 / 2026-07-09 | closed (ר' D-062) |
+  23| | KI-015 | תצורת 9 התיקים המלאה ({M1,M2,M4}×{R_body,S_body,S_wick}) יחד באותה ריצת Orchestrator אחת מעולם לא נבדקה — הבדיקות הקיימות מריצות לכל היותר 2 זרועות (עם אותו זוג (entry,sl_anchor), לצורך בידוד בדיקת המכסה). אין הוכחה בפועל ש-9 התיקים אינם מתערבים זה בזה (למשל: שיתוף Setup Stream זהה, אך בידוד State/הזמנות/מכסה נכון בין 9 תיקים בו-זמנית) . זוהה ב-Critical Review עצמי לפני דוח ההתקדמות של T3.1-T3.3. **כיסוי משמעותי נוסף (D-062):** `tests/test_full_pipeline_9_arms.py` מוכיח ש-9 תיקים רצים יחד, שלושה מהם ממלאים בפועל (אחד לכל מודל-כניסה) והשישה האחרים נשארים לא-מושפעים לחלוטין (`realized_equity`/`fills_today` ללא שינוי) — בידוד מלא מוכח בפועל, לא רק בהנחה. **עדיין לא מכוסה (בזמנו):** אינטראקציית **מכסה** (2 מילויים/יום) כשיותר מ-2 Setups שונים מגיעים ל-ARMED על אותו תיק באותו יום — נשאר open עד שזה ייבדק ספציפית. **Closed (Stage A / B-2, D-069).** שני הפערים שנותרו נסגרו במלואם: (1) דטרמיניזם דו-ריצתי על תרחיש-הריבוי הספציפי (3 ממלאות/6 לא) — `tests/test_at3_15_multiarm_determinism.py` (AT-3.15), מייבא את `_scenario` הזה עצמו ללא שינוי. (2) אינטראקציית מכסה עם 3 Setups נפרדים ל-ARMED על אותו תיק/יום — `tests/test_at3_16_quota_arm_interaction.py` (AT-3.16); הבדיקה הראשונה חשפה כשל אמיתי (`M4EntryModel._watching` דולף setup_id אחרי invalidation פוסט-ARM, גורם ל-`KeyError` לא-מטופל בהמשך הריצה על Setup לא-קשור) שתוקן בהיקף מינימלי מאושר (D-069). | medium | tests/test_full_pipeline_9_arms.py, tests/test_at3_15_multiarm_determinism.py, tests/test_at3_16_quota_arm_interaction.py, src/backtest/orchestrator.py | Phase 3 / 2026-07-09 | closed (ר' D-069, AT-3.15, AT-3.16) |
+  24| | KI-016 | `src/config/models.py` (Pydantic v2: `RulesV1`, `Parameters`, `RunConfig`, `config_hash`) מומש ונבדק ביחידה (`tests/test_config_models.py`), אך אינו מחובר ל-Orchestrator בפועל — `Orchestrator` מקבל את כל הפרמטרים שלו (SL buffer, cost model, risk params וכו') דרך הזרקת constructor ידנית בלבד, לא דרך טעינת `config/rules_v1.yaml`/`config/parameters.yaml`/`config/run_default.yaml` בפועל. ריצה אמיתית מול קונפיג דורשת תרגום ידני כרגע. זוהה ב-Critical Review עצמי לפני דוח ההתקדמות של T3.1-T3.3. **תוקן (D-057):** `src/backtest/run_builder.py::build_orchestrator(rules, parameters, run_config, ...)` מתרגם את שלושת מודלי הקונפיג (כולל 9 התיקים המלאים מ-`run_config.arms`) ל-Orchestrator מחווט במלואו, במקום אחד בלבד. איתר וסגר גם פער חדש בדרך: `FillSimulator.in_news_checker` היה מחווט תמיד ל-Stub `lambda ts: False` בכל קריאה קיימת (גם ב-Orchestrator עצמו) — כעת מחווט ל-`calendar.in_blackout` האמיתי בכל תיק. מכוסה ב-`tests/test_run_builder.py` (4 בדיקות, כולל ריצה מלאה מקצה-לקצה מול קובצי ה-YAML האמיתיים ו-9 התיקים יחד — סוגר גם חלק מ-KI-015). **עדכון (Stage A / B-1, D-068):** `config_hash()` שהוזכרה כאן כמומשת-אך-לא-מחוברת עברה חיווט מלא למסלול הריצה דרך `build_orchestrator` — ר' KI-018 (Closed). | medium | src/backtest/orchestrator.py, src/config/models.py, src/backtest/run_builder.py | Phase 3 / 2026-07-09 | closed (ר' D-057; מכוסה ע"י tests/test_run_builder.py) |
+  25| | KI-017 | `Orchestrator.run()` בפועל מוגדר כ-`run(self) -> RunResult` (כל הדאטה/קונפיג מוזרקים ב-constructor), בעוד `docs/INTERFACES.md` מצהיר `run(self, cfg: RunConfig) -> RunResult`. סטייה בין התיעוד למימוש בפועל — דורשת הכרעה: לעדכן את INTERFACES.md כך שישקף את דפוס ה-constructor-injection בפועל, או ל-Refactor את ה-Orchestrator כך שיקבל `cfg: RunConfig` בזמן `run()`. זוהה ב-Critical Review עצמי לפני דוח ההתקדמות של T3.1-T3.3. **תוקן (D-057):** נבחרה האופציה הראשונה — `docs/INTERFACES.md` עודכן לשקף את `run(self) -> RunResult` בפועל; ה"תרגום מ-config" עצמו עבר ל-`build_orchestrator` (KI-016) ולא ל-`run()`, ששומר על היותו parameterless ונטול-תלות-בקונפיג ישירות (D-037: Orchestrator עדיין data/config-agnostic, רק constructor-injected). | low | src/backtest/orchestrator.py, docs/INTERFACES.md | Phase 3 / 2026-07-09 | closed (ר' D-057) |
+  26| | KI-018 | טבלאות `runs`/`experiments` ב-Journal (זהות-ריצה: `config_hash`, `data_version`, `code_version` — ר' `ExperimentTracker.register_run` ב-INTERFACES.md) מעולם לא נכתבות ע"י ה-Orchestrator — אין קריאה ל-`register_run` בשום מקום ב-`src/`. כתוצאה מכך אין כרגע דרך לאמת בפועל את עקרון הדטרמיניזם של CLAUDE.md ("אותו (config_hash, data_version, code_version) → אותו יומן, ביט-לביט") מול ריצה אמיתית, כי אין רשומת-זהות מתמשכת בכלל. זוהה ב-Critical Review עצמי לפני דוח ההתקדמות של T3.1-T3.3. **כיסוי חלקי (D-059):** התברר בפועל (בזמן מימוש T3.6) שזה לא רק "נחמד שיהיה" — בלי `experiments`/`runs`/`portfolios`, שום כתיבה ל-`orders`/`setup_arm_outcomes`/`trades`/`context_snapshots` לא הייתה יכולה להצליח בכלל מול FK אמיתי. `_write_run_identity_rows` כותב כעת את שלוש הטבלאות פעם אחת בתחילת `run()`, אך `config_hash`/`code_version`/`data_version`/`split_type`/`seed` הם **placeholder מוצהר** ("unknown"/0) — ה-Orchestrator הבסיסי (D-037) לא יודע אותם; חיווט אמיתי (למשל דרך `run_builder`/`config_hash()`) עדיין נדרש. **Closed (Stage A / B-1, D-068).** חיווט אמיתי של `config_hash`/`code_version`/`data_version`/`split_type`/`seed` דרך `build_orchestrator` (`src/backtest/run_builder.py`) — מיקום החיווט נעול ל-`run_builder` בלבד (D-037/D-057 נשמרים; `Orchestrator` עדיין לא מחשב דבר, רק מחזיק את הערכים שהוזרקו). מאומת ב-AT-3.14 (דטרמיניזם דו-ריצתי אמיתי על ה-fixture המלא של D-064 + היעדר "unknown" + `seed IS NULL` + רשומת Registry). הפתרון הסופי ל-`seed` (D-067, שינוי סכימה מאושר) ול-`config_hash` (D-068) הופך גם את ה-Placeholder-ים המוצהרים של D-059 למיותרים. הפניה: KI-016 (`config_hash()`/`build_orchestrator` שחוברו כעת בפועל למסלול הריצה, לא רק קיימים ביחידה). **הערה שנותרה מחוץ להיקף (Follow-up פתוח, עדיפות Low):** קריאות `Orchestrator(...)` ישירות שעוקפות `build_orchestrator` (`tests/fixtures/orchestrator.py::make_orchestrator`) ממשיכות לקבל את ה-Placeholder-ים הישנים — לא נחשב רגרסיה (B-1 נעול ל-`run_builder`, WORK_ORDER_B1.md §2), אך יישאר כך עד שקורא כזה יעבור בעצמו ל-`build_orchestrator`. **עדיפות: Low · יעד: לכל המאוחר ב-Pre-Flight של B-3** (מועד טבעי לבדוק אם ה-Blocker הבא נוגע באותם call sites; אם לא — יישאר פתוח ויועבר הלאה). | medium | src/backtest/orchestrator.py, src/journal/duckdb_writer.py, src/backtest/run_builder.py | Phase 3 / 2026-07-09 | closed (ר' D-068, AT-3.14) |
+  28| | KI-019 | `setup_arm_outcomes` (D-060, אושר במפורש ע"י המשתמש): פוזיציה שעדיין **פתוחה בתום הריצה** (הזמנה מולאה, אך לא יצאה לפני שנגמרו ה-Ticks/Bars שהוזנו — Overnight/Weekend מותר לפי SPEC §11) לעולם לא מקבלת שורת `setup_arm_outcomes`, כי הכתיבה היחידה קורית ב-`_close_trade`/`_cancel_for_setup`, ואף אחד מהם לא רץ עבור פוזיציה שנשארת פתוחה. מקרה-קצה גבולי (משפיע רק על העסקאות האחרונות ליד סוף תקופה/Holdout), לא שיטתי, ואינו משפיע על דטרמיניזם (אין החלטת-מסחר תלוית-Journal). פתרון עתידי: Event Log אמיתי (PK מגורסן) אם/כשיידרש — הוערך ונדחה במפורש מהיקף Phase 3 (D-060). | low | src/backtest/orchestrator.py | Phase 3 / 2026-07-10 | open (מקרה-קצה מתועד, לא חוסם) |
+  29| | KI-020 | **זוהה ב-Critical Review סופי של Phase 3:** צינור זיהוי המבנה מ-4H גולמי — `Orchestrator._apply_4h` → `StructureEngine.step` + `FVGEngine.step_bar_close` → FVG/Bias אמיתיים ב-`StateStore` — **מעולם לא הופעל דרך ה-Orchestrator עצמו**, באף בדיקה של Phase 3. כל בדיקת Orchestrator קיימת (כולל `tests/test_full_pipeline_9_arms.py` שנוסף בביקורת הזו) "מזריעה" FVG+Bias ישירות דרך `store.put(...)`, עוקפת את המנוע לגמרי — תבנית שחוזרת בעקביות מ-T3.2 ועד עכשיו. `StructureEngine`/`FVGEngine` עצמם נבדקים היטב (AT-1.1–AT-1.6, כולל Prefix-Consistency) אך **בבידוד**, לא כפי ש-`_apply_4h` בפועל קורא להם (bar בודד + store, לא batch). ל-D-063 (סדר 1M→5M→4H) יש כעת בדיקה ישירה על `_merged_timeline`, אך אין שום בדיקה שמוכיחה שרצף 4H אמיתי, שעובר דרך ה-Orchestrator, אכן מניב FVG/Bias-flip ש-SetupStream מזהה ומגיב לו נכון בהמשך אותה ריצה. סיכון ארכיטקטוני עיקרי שנותר לפני Phase 4/T3.4. **תוקן/נסגר (D-064):** `tests/test_full_pipeline_from_raw_4h_bars.py` (3 בדיקות) מריץ רצף 4H אמיתי (זהה בצורתו ל-AT-1.3+AT-1.4, שני מקטעים מוכחים בנפרד ומחוברים כאן לראשונה) דרך `build_orchestrator` **ללא שום `store.put`** — BOS→Bias אמיתי, FVG אמיתי [128,116], Engagement→R→S→iFVG→Armed→M2→RiskEngine→FillSimulator→TP, וכן שורות Journal מלאות (`setups`/`context_snapshots`/`trades`) שנבדקות ישירות. הריצה הצליחה בניסיון הראשון לאחר אימות-מקדים בסקריפט-טיוטה (לא נדרש שינוי ארכיטקטוני/קוד לסגירה) — מוכיח שהחיווט האמיתי תקין, לא רק שהמנועים הבודדים תקינים. | medium | src/backtest/orchestrator.py, tests/test_full_pipeline_from_raw_4h_bars.py | Phase 3 / 2026-07-10 | closed (ר' D-064) |
+  30| | KI-021 | **זוהה ב-Self-Review אדוורסרי של B-1 Closure (WORK_ORDER_B1_CLOSURE.md, משימה 3 — לא תוקן בשקט, ר' §1.1 שם).** `_append_registry_record` (`src/backtest/run_builder.py`) כותבת ל-`data/registry/runs.jsonl` באמצעות `registry_path.open("a")` + `write()` פשוט, ללא שום נעילת-קובץ (`fcntl`/`flock`) וללא בדיקת אטומיות. אם `build_orchestrator` ייקרא אי-פעם מכמה תהליכים במקביל שכותבים לאותו `registry_path` בו-זמנית (למשל ריצות מחקר מקבילות ב-Phase 4/5 — עדיין לא קיימות ב-Stage A), רשומות JSONL עלולות להשתזר/להיפגם. **לא סיכון פעיל כרגע:** כל שימוש קיים (בדיקות Phase 3/Stage A) הוא חד-תהליכי בלבד; ה-Registry עצמו זמני עד T5.5 (Experiment Tracker, שאמור לטפל בכתיבה מקבילה כראוי מלכתחילה). | low | src/backtest/run_builder.py | Stage A / B-1 / 2026-07-21 | open (Follow-up: לטפל אם/כש-Phase 4/5 מריצות ריצות מקבילות בפועל, או כחלק מ-T5.5 Experiment Tracker — לא חוסם את B-1 עצמו) |
+  31| | KI-022 | **זוהה תוך כדי סגירת KI-001/KI-002 (ר' D-071) — אימות מול דאטה אמיתית ראשונה (נובמבר 2022) חשף ש-`Validator` (`src/data/validator.py`) מייצר 18 flagged gaps ו-2,998 flagged spikes בחודש בודד.** ניתוח מבוסס-ראיות (`scripts/diagnostics/analyze_spikes.py`, מחקר-רשת, הצלבה עם `build_spread_report`) קבע: רוב ה-gaps ורוב ה-spikes מוסברים כ-Natural market behavior מתועד (rollover יומי 17:00 ET, Thanksgiving, אירועי CPI/גיאופוליטיקה מתוארכים) — אך גודל-move חציוני של spikes מדוגללים (0.2305) קטן מהספרד הטיפוסי (~0.40–0.45), מרמז על רגישות-יתר אפשרית של ה-baseline הרוליג (500 ticks, `spike_z_threshold=8.0`) שמעולם לא נבדק מול דאטה רב-session אמיתי, רק Fixtures סינתטיים. `Validator` אינו מבחין כיום בין (א) Data corruption, (ב) Market behavior טבעי, (ג) Calibration sensitivity — כולן מדוגללות לאותה דגל בודדת. **לא תוקן — נדרש Work Order ייעודי לניסוי-כיול מבוקר (חלונות/ספים חלופיים) לפני כל שינוי threshold/window בפועל.** **נסגר (B-6, D-076/RA-29, Commit 4).** ניסוי-הכיול המבוקר שנדרש כאן בוצע במלואו: Grid-Sweep + הצלבה מול דוח-ספרד אמיתי (`build_spread_report`, B-4) על 3 חודשים אמיתיים ממשטרי-תנודתיות שונים (2022-11 חדשותי, 2024-02 שקט, 2024-11 תנודתי) — לא Fixtures. ב-8.0 (המקורי): 87%-94% מהספייקים המדוגללים קטנים מ-p95-הספרד האמיתי של שעתם, בעקביות בשלושת החודשים. הוכרע מעבר ל-**12.0**, מחווט דרך Config (לא קבוע-שקוף) — ר' KI-008 לעדכון-המנגנון. **מגבלות מוצהרות (RA-29):** כויל על 3 חודשים מייצגים בלבד, לא Sweep מלא על 39 החודשים; מבוסס Spread-Proxy, לא אימות-Slippage/תוצאה-כלכלית-ישירה או בדיקת-False-Negative מלאה. | medium | src/data/validator.py | KI-001 Follow-up / 2026-07-28 | closed (ר' D-076, RA-29, Commit `355d18c`) |
+  32| | KI-023 | **זוהה ב-Pre-Flight/Commit 1 של B-4 (RA-10 Real Spread Report) — אין מנגנון-קוד מרכזי (`holdout_unlock=True`) שאוכף את גבול-ה-Holdout (`config/run_default.yaml::holdout`) על סקריפטים חיצוניים שקוראים ל-`TickParquetStore.read_month()` ישירות.** `data/ticks/` ו-`data/holdout/` "מופרדים פיזית" לפי מבנה-הריפו (`CLAUDE.md`), אך בפועל כל 39 חודשי-ה-Backfill (כולל חלון-ה-Holdout, יולי-דצמבר 2025) יושבים יחד תחת `data/ticks/`, ללא הגנת-קוד אוטומטית שמונעת מסקריפט-אבחון "לראות" אותם. **נפתר במלואו נקודתית ב-B-4 עצמו (D-073):** שתי הגנות ידניות (CLI-level + post-resolution) נבנו בתוך `scripts/diagnostics/run_full_spread_report.py` עצמו ואומתו בפועל (שני מסלולים נבדקו — refuse על חריגה, resolve נכון על טווח חוקי) — B-4 **אינו** תלוי בפתרון-מערכת ואינו חסום על ידי הרשומה הזו. **הבהרה מפורשת (מניעת הרחבת-Scope):** רשומה זו היא **Follow-up בלבד**, **אינה Blocker של B-4** (B-4 סגור במלואו בלעדיה), **ואינה משנה את סטטוס ה-RRR** (סעיף 3 ב-RESEARCH_READINESS_REVIEW.md נותר GO כפי שנקבע ב-D-074, ללא תלות ברשומה זו). ה-Scope שלה מיועד במפורש ל-**B-6/KI-022 או Hardening עתידי** — בניית מנגנון-אכיפה מרכזי ב-`TickParquetStore`/`Checkpoint` עצמם (שינוי-קוד שדורש אישור נפרד) — ו**אין** לפתוח ממנה כל עבודת-קוד נוספת בתוך B-4 עצמו. | medium | src/data/tick_store.py | Stage A / B-4 / 2026-08-07 | open (Follow-up בלבד ל-B-6/KI-022 או Hardening עתידי; לא Blocker של B-4; לא משנה RRR) |
+  33| | KI-024 | **זוהה תוך כדי B-5 Commit 3 (הרצת Quality Gates מחדש, `bash scripts/ci.sh`).** דרישת "Golden Regression" — מוצהרת במפורש ב-`docs/QUALITY_GATES.md` §6 ("יומן תקופת-מדגם זהה ביט-לביט; שינוי מכוון = הסבר + Golden חדש באישור משתמש") וב-`docs/ARCHITECTURE.md` ("בדיקות-על") — **אין לה שום Implementation בריפו:** חיפוש מקיף (`grep -rln "golden" tests/ scripts/`) לא החזיר שום script/test/reference-artifact. אין Baseline-run קיים להשוואה, אין מנגנון-השוואה-ביט-לביט. **לא Blocker ל-B-5 — Follow-up עתידי בלבד.** **נסגר (Stage A / B-8).** `tests/golden/at3_14_baseline.sha256` — SHA256 יחיד, קפוא, על `_canonical_export()` הקיים (`tests/test_at3_14_determinism.py`, לא שוכפל/חולץ ל-`src/`) של תרחיש D-064 (`tests/test_full_pipeline_from_raw_4h_bars.py::_scenario`), מאומת דטרמיניסטי על 3 הרצות עצמאיות זהות לפני ההקפאה. `tests/test_golden_regression.py` — Test חדש שמריץ מחדש את אותו תרחיש ומשווה `computed_hash == frozen_hash`; שינוי מכוון עתידי דורש אישור-משתמש מפורש + Commit נפרד לעדכון ה-Baseline, לא עדכון-שקט. Evidence: Full Suite `pytest -q` = **170 passed** (168+2, ר' D-079/D-080 — encoding+TZ regression tests), `ruff check` נקי; **בדיקת-שפיות מכוונת** — Baseline שובש זמנית, ה-Test נכשל כצפוי (`AssertionError: Golden Regression mismatch`), שוחזר במדויק, חזר ל-PASS. | medium | tests/golden/at3_14_baseline.sha256, tests/test_golden_regression.py | Stage A / B-8 / 2026-08-09 | closed (ר' `tests/test_golden_regression.py`, `tests/golden/at3_14_baseline.sha256`) |
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R2. RRR — all rows + verdict ===" -ForegroundColor Cyan
+
+=== R2. RRR — all rows + verdict ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/RESEARCH_READINESS_REVIEW.md | Select-String -Pattern '^\||^#{1,6}\s|GO|NO-GO|KI-|B-8' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| # RESEARCH READINESS REVIEW — חובה לפני T3.4
+   4| אסורות עד שהסקירה הזו הושלמה בפועל והניבה **GO**. בדיקות טכניות ירוקות (pytest/ruff/Quality Gates) **אינן
+   7| **נוהל כשל:** אם סעיף כלשהו למטה = NO-GO → עוצרים את הפרויקט לפני T3.4. לא ממשיכים "באופן זמני", לא עוקפים
+   8| "רק כדי לבדוק". מפיקים את הדוח הזה במלואו, עם כל סעיף שסומן NO-GO וסיבתו, ומציגים למשתמש לפני כל המשך.
+  12| ## Checklist (למלא בכל הרצה של הסקירה)
+  14| | # | סעיף | דרוש להיות GO | עדות/הפניה |
+  15| |---|---|---|---|
+  16| | 1 | **KI-001 נסגר?** (חסימת רשת ל-Dukascopy) | גישת רשת אמיתית קיימת; `DukascopyDownloader` הורץ בפועל מול `datafeed.dukascopy.com` והביא דאטה אמיתי | הפניה ל-KNOWN_ISSUES.md, סטטוס KI-001 |
+  17| | 2 | **KI-002 נסגר?** (סקאלת `point_value` ל-XAUUSD לא מאומתת) | `point_value` אומת מול דאטה אמיתי (למשל: מחיר Bid/Ask גולמי מפוענח נופל בטווח סביר ליום מסחר ידוע ב-XAUUSD) | הפניה ל-KNOWN_ISSUES.md, סטטוס KI-002 |
+  18| | 3 | **RA-10 כויל?** (Slippage-Stop) — ✅ **GO** (B-4, D-074) | דו"ח ספרד **אמיתי** (לא סינתטי) הופק ל-3 שנות הדאטה; RA-10 עודכן או אושר מחדש מול המדידה, ונרשם ב-RESEARCH_ASSUMPTIONS_V1.md + DECISIONS_LOG לפי הנוהל שם | `scripts/diagnostics/run_full_spread_report.py`, D-074, `docs/RESEARCH_ASSUMPTIONS_V1.md` RA-10. **הבהרה מוצהרת:** הדו"ח כיסה `2022-10-01`…`2025-06-30` (33/39 חודשים) — **לא** את מלוא 39 החודשים; יולי-דצמבר 2025 הוחרגו במכוון כחלון-Holdout (D-073), לא נמדדו לצורך RA-10. `costs.slippage_stop_usd`: `0.10`→`0.70` (p95-Spread, Proxy — לא מדידת-Slippage ישירה, ר' D-074). |
+  19| | 4 | **נתוני Dukascopy אומתו?** — ✅ **GO with explicit limitations documented** (B-5, D-075) | AT-0.1/AT-0.2/AT-0.6/AT-0.7 (ומומלץ גם AT-0.3–0.5) הורצו **מול הדאטה האמיתי בפועל**, לא רק מול Fixtures סינתטיים; 3 שנות דאטה + 90 יום Warm-Up נקיים לפי הגדרת T0.4 | `scripts/diagnostics/run_at0_real_data_checks.py` (AT-0.1/0.4/0.6, Sandbox, נובמבר-2022 האמיתי — 3,641,776 ticks, 29,929/29,929 ברים תואמים), `scripts/diagnostics/run_at0_7_holdout_mechanism_check.py` (AT-0.7, בדיקת-מנגנון על עותק-דאטה-אמיתי — **לא** הפרדה-פיזית, ר' KI-023), `scripts/diagnostics/run_at0_2_cache_check.py` (AT-0.2, מחשב-הבית, `data/raw/` אמיתי — PASS אושר ע"י Roy). D-075. **הבהרות מוצהרות:** (א) הכיסוי הוא **חודש-דוגמה אמיתי אחד** (נובמבר 2022, המאומת-כבר ב-D-070/D-072) לכל AT-0.1/0.4/0.6/0.7 — לא הורץ כ-AT פורמלי על פני כל 39 החודשים; "3 שנות דאטה נקיות" מכוסה בנפרד ע"י אימות-Spike/Gap שבוצע לכל אחד מ-39 החודשים בפועל בזמן ה-Backfill (Batch 1-7 Closure Reports). (ב) AT-0.7 הוא **בדיקת-מנגנון בלבד** — Holdout הפיזי (יולי-דצמבר 2025) עדיין לא הופרד בפועל, ר' KI-023. (ג) AT-0.3 מכוסה ע"י D-071 (לא Gate); AT-0.5 מסומן N/A (ללא-תלות-בדאטה, לא Gate). |
+  20| | 5 | **Quality Gates עדיין ירוקים?** — ❌ **NO-GO (עדכון: B-8, D-079/D-080)** | כל ששת השערים (QUALITY_GATES.md) ירוקים על מצב הריפו הנוכחי, כולל Regression על Phase 0–2 | `bash scripts/ci.sh` (Sandbox, HEAD=`40df439`): Code-Quality ✅, Architecture ✅, Functional **✅ GO** (pytest 170/170; KI-010 high/partially-closed אינו נחשב open לצורך Functional Gate — הכרעה מפורשת, D-078), Regression **✅ GO** (pytest+Prefix-Consistency ✅; Golden Regression **קיים ועובר** — `tests/test_golden_regression.py`, KI-024 closed, מאומת גם תחת TZ=Asia/Jerusalem, ר' D-080), Performance **עדיין לא נמדד מול דאטה אמיתית** (Diagnostic script קיים — B-8 Commit 2 — אך טרם הורץ בפועל על 2024-01..03), Documentation **עדיין לא נבדק פורמלית**. **שער 5 אינו GO** — שני תת-סעיפים בלבד נותרו פתוחים: Performance (הרצה-בפועל) ו-Documentation (בדיקה פורמלית). Functional ו-Regression כבר GO. |
+  21| | 6 | **KI-007 נסגר?** (Point-in-Time SpreadReport, D-049) | `SpreadReport` המוזרק לריצה אמיתית הוא Rolling/Expanding בפועל — נבדק שאין שימוש ב-SpreadReport שמכיל נתונים עתידיים ביחס לכל נקודת-זמן בבקטסט | הפניה ל-KNOWN_ISSUES.md, סטטוס KI-007 + בדיקה ייעודית |
+  22| | 7 | **KI-010 נסגר?** (לוח חדשות אמיתי, RA-23) — ⚠️ **GO with explicit limitations documented (B-7, D-077)** | לוח חדשות אמיתי (CSV, אדום, USD) אותר ואומת; `CalendarEngine` הורץ מולו בפועל, לא רק מול Fixture סינתטי | `src/data/news_loader.py`, `data/news/bls_calendar.csv` (BLS, 66 אירועים אמיתיים), D-077, RA-23. **הבהרה מוצהרת:** ה-GO מתייחס ל-**Pipeline** (Data Contract/Loader/CalendarEngine Integration מוכחים במלואם מול דאטה אמיתי) ול-**Phase 1 בלבד** — CPI + Employment Situation (NFP), 2 מתוך 7 סוגי-אירוע High-Impact-USD מוכרים (`KI010_DECISION_DOC.md` §3). **אינו** Coverage מלא של כל "חדשות אדומות USD" לפי `docs/SPEC_V1_FROZEN.md` שורה 67 — Core PCE/GDP/FOMC Rate Decision/ISM PMI/Retail Sales עדיין לא מכוסים; Backtest על דאטה זה לא יחסום סביבם. Open Future Work — לא משויך ל-B-8; קשור ל-D-078 ותנאי-הפקיעה שלו (ר' D-084). |
+  23| | 8 | **KI-006 נסגר?** (`Portfolio.apply_realized_pnl` מחווט) | `Orchestrator`/Journal flow קורא בפועל ל-`apply_realized_pnl` בכל סגירת עסקה; Sizing מריצה אמיתית משתמש בהון ממומש-בפועל, לא רק בהון ההתחלתי | הפניה ל-KNOWN_ISSUES.md, סטטוס KI-006 + בדיקה ייעודית |
+  24| | 9 | **סיבה כלשהי שלא להתחיל Backtesting אמיתי?** | בדיקה פתוחה: אנומליות דאטה לא-פתורות, חריגה מהחלטות RA-01–09, שינוי לא-מתועד ב-Rules/RA, כל דגל אדום אחר | שיפוט מפורש, לא רק "אין" כברירת מחדל |
+  26| ## פסיקה
+  28| **GO** רק אם **כל תשעת** הסעיפים GO. סעיף אחד NO-GO ⇒ הפסיקה הכוללת NO-GO.
+  30| ## תוצר
+  32| - **GO:** מתועד כאן (תאריך + חתימת-הרצה config_hash/data_version/code_version) ונרשם ב-DECISIONS_LOG; T3.4 יכול להתחיל.
+  33| - **NO-GO:** דוח מפורט לפי הטבלה למעלה — כל סעיף שנכשל, למה, ומה התנאי המדויק לסגירתו — מוצג למשתמש. הפרויקט
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R3. IMPORT-LINTER CONTRACTS RAW (closes Q1) ===" -ForegroundColor Cyan
+
+=== R3. IMPORT-LINTER CONTRACTS RAW (closes Q1) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:pyproject.toml | Select-Object -Skip 59 -First 45 | ForEach-Object -Begin {$i=60} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+  60| # data <- store <- {structure, fvg, displacement} <- entry <- {risk, execution}
+  61| # <- backtest <- journal, with {features, ai, viz, stats, validation, scoring}
+  62| # forbidden from importing any engine module. import-linter requires every
+  63| # named module to exist, so contracts are added module-by-module as each
+  64| # Phase actually builds that module (Phase 0 only has src.data + src.config)
+  65| # rather than declared in bulk against code that doesn't exist yet.
+  66| [tool.importlinter]
+  67| root_package = "src"
+  68|
+  69| [[tool.importlinter.contracts]]
+  70| name = "Config has no engine dependencies"
+  71| type = "forbidden"
+  72| source_modules = ["src.config"]
+  73| forbidden_modules = ["src.data"]
+  74|
+  75| [[tool.importlinter.contracts]]
+  76| name = "core is dependency-free (D-038)"
+  77| type = "forbidden"
+  78| source_modules = ["src.core"]
+  79| forbidden_modules = ["src.config", "src.data"]
+  80|
+  81| [[tool.importlinter.contracts]]
+  82| name = "Viz has no engine dependencies (T3.5)"
+  83| type = "forbidden"
+  84| source_modules = ["src.viz"]
+  85| forbidden_modules = [
+  86|     "src.backtest", "src.entry", "src.risk", "src.execution",
+  87|     "src.structure", "src.fvg", "src.displacement", "src.store",
+  88| ]
+  89|
+  90| [[tool.importlinter.contracts]]
+  91| name = "Engine layering (Phase 3: {data, session, journal} <- store <- displacement <- {structure, fvg} <- {entry, risk, execution} <- backtest)"
+  92| type = "layers"
+  93| layers = [
+  94|     "src.backtest",
+  95|     "src.entry | src.risk | src.execution",
+  96|     "src.structure | src.fvg",
+  97|     "src.displacement",
+  98|     "src.store",
+  99|     "src.session | src.data | src.journal",
+ 100| ]
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R4. PROJECT_STATE — anchor + B8 + KI010 ===" -ForegroundColor Cyan
+
+=== R4. PROJECT_STATE — anchor + B8 + KI010 ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:PROJECT_STATE.md | Select-String -Pattern '79b55be|f9a8d22|71630ab|Anchor|B-8|KI-010|D-08|HANDOFF|ARCHIVAL' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   2| **Evidence Anchor:** 79b55bed96d4786178669cd8ef0aaf20b8ee8889
+   8| KNOWN_ISSUES / RESEARCH_READINESS_REVIEW → מסמכי ARCHIVAL
+  17| | קו B-8 מוזג ל-main | Git | כל סביבה | 2026-08-11 |
+PS C:\Users\User\Trading-startegy-ai> Stop-Transcript
+Transcript stopped, output file is C:\Users\User\Trading-startegy-ai\docgate_step5.txt
+PS C:\Users\User\Trading-startegy-ai> [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+PS C:\Users\User\Trading-startegy-ai> Start-Transcript -Path "docgate_step6.txt" -Force
+Transcript started, output file is docgate_step6.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S1. QUALITY_GATES.md — FULL (source of truth for the Gate) ===" -ForegroundColor Cyan
+
+=== S1. QUALITY_GATES.md — FULL (source of truth for the Gate) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/QUALITY_GATES.md
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S2. PROJECT_STATE.md RAW 1..30 ===" -ForegroundColor Cyan
+
+=== S2. PROJECT_STATE.md RAW 1..30 ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:PROJECT_STATE.md | Select-Object -First 30 | ForEach-Object -Begin {$i=1} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+   1| # PROJECT STATE — Context Snapshot
+   2| **Evidence Anchor:** 79b55bed96d4786178669cd8ef0aaf20b8ee8889
+   3| **Snapshot:** 2026-08-11
+   4| **חובת תחזוקה:** מסמך זה הוא שכבת Context בין הכלים, לא Source of
+   5| Truth. בכל סתירה מול Git או מסמכי Authority — **מסמך זה מפסיד**;
+   6| יש לאמת מחדש מול המקור ולעדכן מסמך זה בהתאם.
+   7| **סדר סמכות:** Git/Code → Tests/Evidence → DECISIONS_LOG →
+   8| KNOWN_ISSUES / RESEARCH_READINESS_REVIEW → מסמכי ARCHIVAL
+   9|
+  10| ## מצב מאומת
+  11|
+  12| | טענה | Authority | סביבת אימות | תאריך |
+  13| |---|---|---|---|
+  14| | origin/main = 9db723c | Git | כל סביבה עם גישה ל-origin | 2026-08-11 |
+  15| | working tree נקי | Git | Windows (מכונת Roy) | 2026-08-11 |
+  16| | 170/170 tests | pytest | Windows בלבד | 2026-08-11 |
+  17| | קו B-8 מוזג ל-main | Git | כל סביבה | 2026-08-11 |
+  18|
+  19| ## פריטים פתוחים
+  20|
+  21| | פריט | Authority | סטטוס |
+  22| |---|---|---|
+  23| | KI פתוחים/חלקיים | docs/KNOWN_ISSUES.md | ר' מסמך |
+  24| | Gates | docs/RESEARCH_READINESS_REVIEW.md | Performance + Documentation לא הוכחו |
+  25| | ניקוי ענפים | Git | טרם בוצע |
+  26| | היעדר CI | — | טרם נרשם כ-KI |
+  27|
+  28| ## Next Action
+  29|
+  30| ניקוי ענפים — j5para, ki-001-proxy-check-qtdhjg, b8-integration, docs-preservation.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S3. SHA MAP ===" -ForegroundColor Cyan
+
+=== S3. SHA MAP ===
+PS C:\Users\User\Trading-startegy-ai> foreach ($s in @('79b55be','40df439','71630ab','f9a8d22','9db723c')) {
+  $r = git log -1 --format="%h %ad %s" --date=short $s 2>&1
+  "{0,-10} -> {1}" -f $s, ($r | Select-Object -First 1)
+}
+79b55be    -> 79b55be 2026-08-11 Merge PROJECT_STATE.md and D-081..D-083 into main
+40df439    -> 40df439 2026-08-10 Fix DuckDBJournal timezone determinism
+71630ab    -> 71630ab 2026-08-11 Update PROJECT_STATE.md Evidence Anchor to 79b55be
+f9a8d22    -> f9a8d22 2026-08-11 Record D-084: News Coverage expansion is Open Future Work, not B-8
+9db723c    -> 9db723c 2026-08-10 Merge B-8 line into main
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- ancestor of f9a8d22? ---"
+--- ancestor of f9a8d22? ---
+PS C:\Users\User\Trading-startegy-ai> foreach ($s in @('79b55be','40df439','71630ab','9db723c')) {
+  git merge-base --is-ancestor $s f9a8d22 2>$null
+  "{0,-10} ancestor-of-f9a8d22: {1}" -f $s, $?
+}
+
+79b55be    ancestor-of-f9a8d22: True
+
+40df439    ancestor-of-f9a8d22: True
+
+71630ab    ancestor-of-f9a8d22: True
+
+9db723c    ancestor-of-f9a8d22: True
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S4. PHASE_PLAN — Stage A / B-blocks / decisions ===" -ForegroundColor Cyan
+
+=== S4. PHASE_PLAN — Stage A / B-blocks / decisions ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/PHASE_PLAN.md | Select-String -Pattern 'B-\d|Stage A|D-0[5-8]\d|KI-0' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+  14| - **תת-שער דאטה (פתוח, KI-001/KI-002):** 3 שנות דאטה אמיתי נקיות + דו"ח ספרד אמיתי מוצג למשתמש + כיול RA-10 — טרם קיימים (סביבת הפיתוח חוסמת רשת ל-Dukascopy). **אינו חוסם Phase 1–2** (הבדיקות שלהם מתוכננות על Fixtures סינתטיים לפי ACCEPTANCE_TESTS.md ואינן תלויות בדאטה אמיתי). **חוסם באופן מוחלט את T3.4 ואת Phase 4–5** — ר' "Research Readiness Review" לפני Phase 3 למטה.
+  27| - T2.1 Cost Model: ספרד מהדאטה, Slippage-Stop (×3 בחדשות), Delay (D-050), Commission.
+  32| **Gate: Green-Conditional (סגור, 2026-07-09, באישור משתמש, בדפוס D-036):** AT-2.1–AT-2.8 ירוקות (48/48 בבדיקה מלאה כולל Phase 0–1); כל שאר חמשת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase2.py`) רץ מקצה-לקצה. **התנאי:** KI-001 ו-KI-007 (שניהם `high`) נשארים פתוחים אך **אינם חוסמים** את סגירת Phase 2 עצמה — הם הופכים לחוסמים מחייבים לפני T3.4 (Research Readiness Review, D-037). KI-006 ו-KI-007 נקבעו כחלק מחייב מעיצוב ה-Orchestrator הראשוני (T3.3), לא כ-Refactor מאוחר.
+  44| **Gate (קודי): Green-Conditional (סגור, 2026-07-10, באישור משתמש, בדפוס D-036/D-051):** T3.1–T3.3, T3.5, T3.6 מומשו במלואם; 127/127 בדיקות ירוקות; כל ששת ה-Quality Gates ירוקים; Demo (`scripts/demo_phase3.py`) רץ מקצה-לקצה כולל Viz+Journal; Critical Review עצמאי מלא בוצע (ר' D-062–D-064) ואומת בפועל — לא רק בקריאת-קוד — כולל תרחיש-פייפליין-מלא מ-4H גולמי ללא זריעה (KI-020, סגור). **התנאי (חוסם רק את T3.4 ואת השער המלא, לא את סגירת הצד הקודי):** T3.4 (ריצה אמיתית) ו-AT-3.10 (20 עסקאות מדגם) דורשים Research Readiness Review = GO, שדורש בעצמו גישת רשת אמיתית ל-Dukascopy (KI-001) ולוח חדשות אמיתי (KI-010) — שניהם חסומי-סביבה, לא חסרי-קוד. ר' `docs/RESEARCH_READINESS_REVIEW.md`.
+  46| **Gate (מלא, לא-סגור עדיין):** AT-3.*; **20 עסקאות מדגם מאומתות ידנית על הגרף מול היומן** + אישור משתמש שהלוגיקה = הכוונה. חסום ע"י Research Readiness Review (KI-001/KI-010).
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S5. KI-006 / KI-007 STATUS ===" -ForegroundColor Cyan
+
+=== S5. KI-006 / KI-007 STATUS ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/KNOWN_ISSUES.md | Select-String -Pattern 'KI-006|KI-007' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+  11| | KI-006 | `Portfolio.apply_realized_pnl()` מוגדר ונבדק ביחידה (`tests/test_portfolio.py`), אך אינו מחובר לזרימת המילוי/סגירה בפועל — שום קוד ב-`src/` לא קורא לו (אומת ב-`grep -rn "apply_realized_pnl" src/`). כתוצאה מכך `Portfolio.realized_equity` נשאר קבוע על `initial_equity` דרך כל Phase 2, וכל Sizing (`size_units`) מבוסס בפועל רק על ההון ההתחלתי, לא ההון הממומש בפועל. אינו משפיע על Phase 2 (אין עדיין Orchestrator שמריץ עסקאות מקצה-לקצה), אך **חייב** להיות מחווט לזרימת ה-Exit/Fill ב-Phase 3, אחרת Sizing מכל Phase 4 ואילך יהיה שגוי בשקט. זוהה ב-Critical Review עצמי של Phase 2 (לא ע"י בדיקה שנכשלה). **תוקן (T3.3):** `Orchestrator._close_trade()` קורא ל-`apply_realized_pnl(net_pnl)` בכל Fill מסוג יציאה; מכוסה ב-`tests/test_orchestrator.py::test_end_to_end_armed_setup_fills_and_closes_trade_updates_equity`. | medium | src/risk/portfolio.py, src/backtest/orchestrator.py | Phase 2 / 2026-07-09 | closed (ר' T3.3; מכוסה ע"י tests/test_orchestrator.py) |
+  12| | KI-007 | `SpreadReport`/`build_spread_report(ticks, symbol)` (`src/data/spread_report.py`) אינו מבצע חלוקת-זמן (Time-Windowing) — הוא צובר `median_spread` לפי שעת-יום על פני **כל** טווח ה-Ticks שהוזן, ללא הפרדה בין עבר/עתיד ביחס לכל נקודת-זמן בבקטסט. ב-Phase 2 `RiskEngine.approve()` צורך את `SpreadReport` דרך `MarketContext.median_spread(hour_et)` (ר' `StateStore.median_spread`) כדי לחשב `min_stop_distance`. כל עוד ה-Phase 2 tests מזריקים `SpreadReport` מבוקר-ידנית דרך Fixtures (`tests/fixtures/spread.py`), אין דליפת מידע בפועל. **הוכרע (D-049, אושר ע"י המשתמש):** ב-v1, `median_spread` חייב תמיד להיגזר מ-Rolling/Expanding SpreadReport (רק נתונים זמינים עד `now`) — לא מאגרגט תקופתי מלא. **תוקן (D-055):** `ExpandingSpreadReport` (`src/data/spread_report.py`) מומש ומחווט בפועל ל-Orchestrator — `_apply_tick` מזין אותו בכל Tick (Stage 1, לפני כל שאילתת `median_spread` לאותו timestamp); `SpreadReport`/`build_spread_report` המקוריים נשארים ללא שינוי, ייעודם ל-T0.6/כיול RA-10 בלבד ואינם משמשים עוד לקבלת החלטות חיות. מכוסה ב-AT-3.12 (`tests/test_at3_12_spread_pit.py`) — כולל הוכחת אי-תלות-בעתיד ברמת יחידה וברמת Orchestrator. | high | src/data/spread_report.py, src/store/state_store.py, src/backtest/orchestrator.py | Phase 2 / 2026-07-09 | closed (ר' D-055; מכוסה ע"י tests/test_at3_12_spread_pit.py) |
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S6. HOLDOUT ENFORCEMENT ON THE T3.4 PATH (DG-10) ===" -ForegroundColor Cyan
+
+=== S6. HOLDOUT ENFORCEMENT ON THE T3.4 PATH (DG-10) ===
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- S6a: tick_store.py ---" -ForegroundColor Yellow
+--- S6a: tick_store.py ---
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:src/data/tick_store.py | Select-String -Pattern 'holdout|unlock|def |raise|refuse|assert' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+  21|     """Raised when re-writing a month would silently change already-published data."""
+  36|     def __init__(self, root: Path) -> None:
+  40|     def month_path(self, symbol: str, year: int, month: int) -> Path:
+  44|     def write_month(
+  49|         Raises:
+  67|                 raise TickStoreConflictError(
+  78|     def read_month(self, symbol: str, year: int, month: int) -> pl.DataFrame:
+  82|     def data_version(self, symbol: str, months: list[tuple[int, int]]) -> str:
+  91| def months_between(start: datetime, end: datetime) -> list[tuple[int, int]]:
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- S6b: holdout.py ---" -ForegroundColor Yellow
+--- S6b: holdout.py ---
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:src/data/holdout.py | Select-String -Pattern 'def |holdout|unlock|raise|class ' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   5| therefore cannot see it by accident; ``HoldoutGuard`` is the only way back
+   6| in, and every unlocked access is logged append-only — the Phase 5
+  22| class HoldoutAccessDenied(RuntimeError):
+  23|     """Raised when a range overlapping the hold-out is loaded without holdout_unlock=True."""
+  27| class HoldoutRange:
+  33|     def overlaps(self, start: datetime, end: datetime) -> bool:
+  38| def compute_holdout_range(
+  40| ) -> HoldoutRange:
+  44|         raise ValueError(
+  48|     holdout_months = months[-last_months:]
+  49|     hy, hm = holdout_months[0]
+  50|     holdout_start = datetime(hy, hm, 1, tzinfo=UTC)
+  51|     return HoldoutRange(start=holdout_start, end=data_end)
+  54| def separate_holdout(
+  55|     store: TickParquetStore, holdout_root: Path, symbol: str, holdout_range: HoldoutRange
+  57|     """Move every monthly Parquet file overlapping ``holdout_range`` into ``holdout_root``.
+  63|     for year, month in months_between(holdout_range.start, holdout_range.end):
+  68|         dst = holdout_root / symbol / f"{year:04d}" / f"{month:02d}.parquet"
+  78| class HoldoutGuard:
+  81|     def __init__(self, holdout_root: Path, usage_log_path: Path) -> None:
+  82|         """Create a guard reading from ``holdout_root`` and logging to ``usage_log_path``."""
+  83|         self.store = TickParquetStore(holdout_root)
+  86|     def load(
+  91|         holdout_range: HoldoutRange,
+  92|         holdout_unlock: bool = False,
+  95|         """Load ticks overlapping the hold-out; refuses unless ``holdout_unlock=True``.
+  97|         Raises:
+  98|             HoldoutAccessDenied: if [start, end) overlaps the hold-out and
+  99|                 ``holdout_unlock`` is False.
+ 101|         if not holdout_range.overlaps(start, end):
+ 102|             raise ValueError("[start, end) does not overlap the hold-out range at all")
+ 103|         if not holdout_unlock:
+ 104|             raise HoldoutAccessDenied(
+ 105|                 f"refusing to load hold-out range {holdout_range.start}..{holdout_range.end} "
+ 106|                 "without holdout_unlock=True"
+ 114|     def _log_usage(self, symbol: str, start: datetime, end: datetime, reason: str) -> None:
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- S6c: does run_builder/orchestrator reference holdout? ---" -ForegroundColor Yellow
+--- S6c: does run_builder/orchestrator reference holdout? ---
+PS C:\Users\User\Trading-startegy-ai> foreach ($f in @('src/backtest/run_builder.py','src/backtest/orchestrator.py')) {
+  "--- $f ---"
+  git show f9a8d22:$f | Select-String -Pattern 'holdout|unlock|read_month|TickParquetStore' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+}
+--- src/backtest/run_builder.py ---
+--- src/backtest/orchestrator.py ---
+ 169|                 "holdout_range": json.dumps(None), "created_at": created_at,
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- S6d: run_default.yaml holdout config ---" -ForegroundColor Yellow
+--- S6d: run_default.yaml holdout config ---
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:config/run_default.yaml 2>&1 | Select-String -Pattern 'holdout|unlock|split|date' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   5| holdout: {last_months: 6, unlocked: false}
+PS C:\Users\User\Trading-startegy-ai> Stop-Transcript
+Transcript stopped, output file is C:\Users\User\Trading-startegy-ai\docgate_step6.txt
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> find data/ticks/XAUUSD -name "*.parquet" | sort
+PS C:\Users\User\Trading-startegy-ai> find data/ticks/XAUUSD -name "*.parquet" | wc -l
+wc : The term 'wc' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:44
++ find data/ticks/XAUUSD -name "*.parquet" | wc -l
++                                            ~~
+    + CategoryInfo          : ObjectNotFound: (wc:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+wc : The term 'wc' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:44
++ find data/ticks/XAUUSD -name "*.parquet" | wc -l
++                                            ~~
+    + CategoryInfo          : ObjectNotFound: (wc:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> git branch --show-current
+
+PS C:\Users\User\Trading-startegy-ai> git log --oneline -10
+
+PS C:\Users\User\Trading-startegy-ai> git log --oneline --all --grep="D-086"
+
+PS C:\Users\User\Trading-startegy-ai> git remote -v
+
+PS C:\Users\User\Trading-startegy-ai> git branch -a
+
+PS C:\Users\User\Trading-startegy-ai> git log --all --oneline --decorate --grep="holdout"
+
+PS C:\Users\User\Trading-startegy-ai> git cat-file -t a28ba8c104fa2886074e517e7cb5f101c4b1045d
+
+PS C:\Users\User\Trading-startegy-ai> git fetch origin --prune
+
+PS C:\Users\User\Trading-startegy-ai> git log origin/main --oneline -20
+
+PS C:\Users\User\Trading-startegy-ai> git log origin/main --oneline --grep="D-085"
+
+PS C:\Users\User\Trading-startegy-ai> git log origin/main --oneline --grep="D-086"
+
+PS C:\Users\User\Trading-startegy-ai> git branch -a
+
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> git fetch origin --prune
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse origin/main
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> git merge-base --is-ancestor HEAD origin/main
+
+PS C:\Users\User\Trading-startegy-ai> echo $LASTEXITCODE
+0
+PS C:\Users\User\Trading-startegy-ai> git pull --ff-only origin main
+
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse origin/main
+
+PS C:\Users\User\Trading-startegy-ai> git log -1 --oneline
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "=== P1 — Git State ==="
+=== P1 — Git State ===
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> git log --oneline --all --grep="D-085"
+
+PS C:\Users\User\Trading-startegy-ai> git log --oneline --all --grep="D-086"
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P2 — Count XAUUSD parquet files ==="
+
+=== P2 — Count XAUUSD parquet files ===
+PS C:\Users\User\Trading-startegy-ai> $files = Get-ChildItem "data/ticks/XAUUSD" -Recurse -Filter "*.parquet" | Sort-Object FullName
+PS C:\Users\User\Trading-startegy-ai> $files | ForEach-Object { $_.FullName }
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2022\10.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2022\11.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2022\12.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\01.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\02.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\03.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\04.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\05.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\06.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\07.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\08.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\09.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\10.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\11.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2023\12.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\01.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\02.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\03.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\04.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\05.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\06.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\07.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\08.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\09.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\10.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\11.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2024\12.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\01.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\02.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\03.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\04.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\05.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\06.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\07.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\08.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\09.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\10.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\11.parquet
+C:\Users\User\Trading-startegy-ai\data\ticks\XAUUSD\2025\12.parquet
+PS C:\Users\User\Trading-startegy-ai> Write-Host "TOTAL PARQUET FILES: $($files.Count)"
+TOTAL PARQUET FILES: 39
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P3 — Actual Holdout Range ==="
+
+=== P3 — Actual Holdout Range ===
+PS C:\Users\User\Trading-startegy-ai> uv run python -c "from src.data.holdout import XAUUSD_HOLDOUT_RANGE; print(XAUUSD_HOLDOUT_RANGE.start, '..', XAUUSD_HOLDOUT_RANGE.end)"
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P4 — Holdout Files + SHA256 ==="
+
+=== P4 — Holdout Files + SHA256 ===
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in "07","08","09","10","11","12") {
+    $f = "data/ticks/XAUUSD/2025/$m.parquet"
+    $h = "data/ticks/XAUUSD/2025/$m.parquet.sha256"
+
+    Write-Host "=== $m ==="
+    if (Test-Path $f) { Write-Host "parquet: EXISTS" } else { Write-Host "parquet: MISSING" }
+    if (Test-Path $h) { Write-Host "sha256:  EXISTS" } else { Write-Host "sha256:  MISSING" }
+
+    if ((Test-Path $f) -and (Test-Path $h)) {
+        $recorded = (Get-Content $h -Raw).Trim()
+        $computed = (Get-FileHash $f -Algorithm SHA256).Hash.ToLower()
+        Write-Host "recorded: $recorded"
+        Write-Host "computed: $computed"
+
+        if ($recorded -eq $computed) {
+            Write-Host "HASH: MATCH"
+        } else {
+            Write-Host "HASH: MISMATCH"
+        }
+    }
+}
+=== 07 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557
+computed: 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557
+HASH: MATCH
+=== 08 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461
+computed: 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461
+HASH: MATCH
+=== 09 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd
+computed: e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd
+HASH: MATCH
+=== 10 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a
+computed: ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a
+HASH: MATCH
+=== 11 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842
+computed: 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842
+HASH: MATCH
+=== 12 ===
+parquet: EXISTS
+sha256:  EXISTS
+recorded: 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820
+computed: 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820
+HASH: MATCH
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P5 — Existing holdout directory ==="
+
+=== P5 — Existing holdout directory ===
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path "data/holdout") {
+    $holdoutFiles = Get-ChildItem "data/holdout" -Recurse -File
+    Write-Host "WARNING: data/holdout exists — $($holdoutFiles.Count) files"
+    $holdoutFiles | ForEach-Object { $_.FullName }
+} else {
+    Write-Host "OK: data/holdout does not exist"
+}
+OK: data/holdout does not exist
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P6 — Git State Again ==="
+
+=== P6 — Git State Again ===
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> uv run python scripts/tools/run_separate_holdout.py `
+  --ticks-dir data/ticks `
+  --holdout-root data/holdout `
+  --symbol XAUUSD
+
+PS C:\Users\User\Trading-startegy-ai> uv run python scripts/tools/run_separate_holdout.py `
+  --ticks-dir data/ticks `
+  --holdout-dir data/holdout
+
+PS C:\Users\User\Trading-startegy-ai> uv run python scripts/tools/run_separate_holdout.py `
+  --ticks-dir data/ticks `
+  --holdout-dir data/holdout
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> git rev-parse origin/main
+
+PS C:\Users\User\Trading-startegy-ai> git status --short
+
+PS C:\Users\User\Trading-startegy-ai> uv run python scripts/tools/run_separate_holdout.py `
+  --ticks-dir data/ticks `
+  --holdout-dir data/holdout `
+  --confirm
+
+PS C:\Users\User\Trading-startegy-ai> # =====================================================================
+PS C:\Users\User\Trading-startegy-ai> # B-9 / D-086  --  B.2 POST-FLIGHT VERIFICATION  (V1..V13)
+PS C:\Users\User\Trading-startegy-ai> # STRICTLY READ-ONLY. No mutation, no --confirm, no writes, no git writes.
+PS C:\Users\User\Trading-startegy-ai> # Run from: C:\Users\User\Trading-startegy-ai
+PS C:\Users\User\Trading-startegy-ai> # =====================================================================
+PS C:\Users\User\Trading-startegy-ai> $ErrorActionPreference = 'Continue'
+PS C:\Users\User\Trading-startegy-ai> Set-Location 'C:\Users\User\Trading-startegy-ai'
+PS C:\Users\User\Trading-startegy-ai> $global:Status = [ordered]@{}
+PS C:\Users\User\Trading-startegy-ai> function Set-Res([string]$id, [string]$st) { $global:Status[$id] = $st }
+PS C:\Users\User\Trading-startegy-ai> function Hdr([string]$t) { Write-Host ""; Write-Host "=====================================================================";
+                           Write-Host $t; Write-Host "=====================================================================" }
+PS C:\Users\User\Trading-startegy-ai> $TicksRoot   = 'data\ticks\XAUUSD'
+PS C:\Users\User\Trading-startegy-ai> $HoldoutRoot = 'data\holdout\XAUUSD'
+PS C:\Users\User\Trading-startegy-ai> $HoldMonths  = @('07','08','09','10','11','12')
+PS C:\Users\User\Trading-startegy-ai> $KnownHashes = [ordered]@{
+  '07' = '17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557'
+  '08' = '1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461'
+  '09' = 'e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd'
+  '10' = 'ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a'
+  '11' = '6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842'
+  '12' = '268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820'
+}
+PS C:\Users\User\Trading-startegy-ai> Hdr "RO-GUARD (BEFORE)  --  repo state baseline"
+
+=====================================================================
+RO-GUARD (BEFORE)  --  repo state baseline
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> Write-Host "PWD          : $((Get-Location).Path)"
+PWD          : C:\Users\User\Trading-startegy-ai
+PS C:\Users\User\Trading-startegy-ai> Write-Host "git rev-parse HEAD:"
+git rev-parse HEAD:
+PS C:\Users\User\Trading-startegy-ai> git rev-parse HEAD
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "git status --short (BEFORE):"
+git status --short (BEFORE):
+PS C:\Users\User\Trading-startegy-ai> $RoBefore = (git status --short | Out-String)
+PS C:\Users\User\Trading-startegy-ai> Write-Host $RoBefore
+?? docgate_step1b.txt
+?? docgate_step2.txt
+?? docgate_step3.txt
+?? docgate_step4.txt
+?? docgate_step5.txt
+?? docgate_step6.txt
+?? ps.txt
+?? rrr.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- end BEFORE baseline ---"
+--- end BEFORE baseline ---
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V1  --  0 parquet AND 0 sha256 for 2025/07..12 under data\ticks\XAUUSD"
+
+=====================================================================
+V1  --  0 parquet AND 0 sha256 for 2025/07..12 under data\ticks\XAUUSD
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v1Hits = @()
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in $HoldMonths) {
+  foreach ($suffix in @("$m.parquet", "$m.parquet.sha256")) {
+    $p = Join-Path $TicksRoot "2025\$suffix"
+    $ex = Test-Path -LiteralPath $p
+    Write-Host ("EVIDENCE  Test-Path {0,-46} = {1}" -f $p, $ex)
+    if ($ex) { $v1Hits += $p }
+  }
+}
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\07.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\07.parquet.sha256       = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\08.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\08.parquet.sha256       = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\09.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\09.parquet.sha256       = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\10.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\10.parquet.sha256       = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\11.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\11.parquet.sha256       = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\12.parquet              = False
+EVIDENCE  Test-Path data\ticks\XAUUSD\2025\12.parquet.sha256       = False
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  Directory listing of $TicksRoot\2025 :"
+EVIDENCE  Directory listing of data\ticks\XAUUSD\2025 :
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path -LiteralPath "$TicksRoot\2025") {
+  Get-ChildItem -LiteralPath "$TicksRoot\2025" -File | Select-Object Name, Length | Format-Table -AutoSize | Out-String | Write-Host
+} else {
+  Write-Host "  (directory $TicksRoot\2025 does not exist)"
+}
+
+Name                Length
+----                ------
+01.parquet        32814497
+01.parquet.sha256       64
+02.parquet        33824760
+02.parquet.sha256       64
+03.parquet        31252931
+03.parquet.sha256       64
+04.parquet        38994298
+04.parquet.sha256       64
+05.parquet        32950564
+05.parquet.sha256       64
+06.parquet        28604186
+06.parquet.sha256       64
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath $TicksRoot)) {
+  Write-Host "STATUS: N/A  (data\ticks\XAUUSD does not exist -- cannot evaluate)"; Set-Res 'V1' 'N/A'
+} elseif ($v1Hits.Count -eq 0) {
+  Write-Host "STATUS: PASS  (0 hold-out-month files remain under data\ticks)"; Set-Res 'V1' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  ($($v1Hits.Count) hold-out file(s) still present: $($v1Hits -join ', '))"; Set-Res 'V1' 'FAIL'
+}
+STATUS: PASS  (0 hold-out-month files remain under data\ticks)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V2  --  all 6 hold-out months present under data\holdout\XAUUSD\2025"
+
+=====================================================================
+V2  --  all 6 hold-out months present under data\holdout\XAUUSD\2025
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v2Missing = @()
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in $HoldMonths) {
+  $p = Join-Path $HoldoutRoot "2025\$m.parquet"
+  $ex = Test-Path -LiteralPath $p
+  $sz = if ($ex) { (Get-Item -LiteralPath $p).Length } else { 'n/a' }
+  Write-Host ("EVIDENCE  {0,-46} exists={1}  bytes={2}" -f $p, $ex, $sz)
+  if (-not $ex) { $v2Missing += $p }
+}
+EVIDENCE  data\holdout\XAUUSD\2025\07.parquet            exists=True  bytes=24951622
+EVIDENCE  data\holdout\XAUUSD\2025\08.parquet            exists=True  bytes=25589801
+EVIDENCE  data\holdout\XAUUSD\2025\09.parquet            exists=True  bytes=35136455
+EVIDENCE  data\holdout\XAUUSD\2025\10.parquet            exists=True  bytes=59959207
+EVIDENCE  data\holdout\XAUUSD\2025\11.parquet            exists=True  bytes=41847404
+EVIDENCE  data\holdout\XAUUSD\2025\12.parquet            exists=True  bytes=50011364
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath $HoldoutRoot)) {
+  Write-Host "STATUS: N/A  (data\holdout\XAUUSD does not exist)"; Set-Res 'V2' 'N/A'
+} elseif ($v2Missing.Count -eq 0) {
+  Write-Host "STATUS: PASS  (6/6 hold-out parquet files present)"; Set-Res 'V2' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  (missing: $($v2Missing -join ', '))"; Set-Res 'V2' 'FAIL'
+}
+STATUS: PASS  (6/6 hold-out parquet files present)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V3  --  all 6 .sha256 sidecars present at destination"
+
+=====================================================================
+V3  --  all 6 .sha256 sidecars present at destination
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v3Missing = @()
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in $HoldMonths) {
+  $p = Join-Path $HoldoutRoot "2025\$m.parquet.sha256"
+  $ex = Test-Path -LiteralPath $p
+  $content = if ($ex) { (Get-Content -LiteralPath $p -Raw).Trim() } else { 'n/a' }
+  Write-Host ("EVIDENCE  {0,-53} exists={1}" -f $p, $ex)
+  Write-Host ("          recorded = {0}" -f $content)
+  if (-not $ex) { $v3Missing += $p }
+}
+EVIDENCE  data\holdout\XAUUSD\2025\07.parquet.sha256            exists=True
+          recorded = 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557
+EVIDENCE  data\holdout\XAUUSD\2025\08.parquet.sha256            exists=True
+          recorded = 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461
+EVIDENCE  data\holdout\XAUUSD\2025\09.parquet.sha256            exists=True
+          recorded = e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd
+EVIDENCE  data\holdout\XAUUSD\2025\10.parquet.sha256            exists=True
+          recorded = ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a
+EVIDENCE  data\holdout\XAUUSD\2025\11.parquet.sha256            exists=True
+          recorded = 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842
+EVIDENCE  data\holdout\XAUUSD\2025\12.parquet.sha256            exists=True
+          recorded = 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath $HoldoutRoot)) {
+  Write-Host "STATUS: N/A  (data\holdout\XAUUSD does not exist)"; Set-Res 'V3' 'N/A'
+} elseif ($v3Missing.Count -eq 0) {
+  Write-Host "STATUS: PASS  (6/6 sidecars present)"; Set-Res 'V3' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  (missing: $($v3Missing -join ', '))"; Set-Res 'V3' 'FAIL'
+}
+STATUS: PASS  (6/6 sidecars present)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V4  --  destination parquet hash == destination recorded sidecar hash"
+
+=====================================================================
+V4  --  destination parquet hash == destination recorded sidecar hash
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v4Bad = @(); $v4Skip = @()
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in $HoldMonths) {
+  $pq = Join-Path $HoldoutRoot "2025\$m.parquet"
+  $sc = Join-Path $HoldoutRoot "2025\$m.parquet.sha256"
+  if (-not (Test-Path -LiteralPath $pq) -or -not (Test-Path -LiteralPath $sc)) {
+    Write-Host "EVIDENCE  2025-$m : SKIPPED (parquet exists=$(Test-Path -LiteralPath $pq), sidecar exists=$(Test-Path -LiteralPath $sc))"
+    $v4Skip += $m; continue
+  }
+  $computed = (Get-FileHash -LiteralPath $pq -Algorithm SHA256).Hash.ToLower()
+  $recorded = (Get-Content -LiteralPath $sc -Raw).Trim().ToLower()
+  $ok = ($computed -eq $recorded)
+  Write-Host "EVIDENCE  2025-$m"
+  Write-Host "          computed = $computed"
+  Write-Host "          recorded = $recorded"
+  Write-Host "          match    = $ok"
+  if (-not $ok) { $v4Bad += $m }
+}
+EVIDENCE  2025-07
+          computed = 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557
+          recorded = 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557
+          match    = True
+EVIDENCE  2025-08
+          computed = 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461
+          recorded = 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461
+          match    = True
+EVIDENCE  2025-09
+          computed = e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd
+          recorded = e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd
+          match    = True
+EVIDENCE  2025-10
+          computed = ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a
+          recorded = ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a
+          match    = True
+EVIDENCE  2025-11
+          computed = 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842
+          recorded = 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842
+          match    = True
+EVIDENCE  2025-12
+          computed = 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820
+          recorded = 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820
+          match    = True
+PS C:\Users\User\Trading-startegy-ai> if ($v4Skip.Count -eq 6) {
+  Write-Host "STATUS: N/A  (no destination file pairs available to compare)"; Set-Res 'V4' 'N/A'
+} elseif ($v4Bad.Count -eq 0 -and $v4Skip.Count -eq 0) {
+  Write-Host "STATUS: PASS  (6/6 destination hashes match their sidecars)"; Set-Res 'V4' 'PASS'
+} elseif ($v4Bad.Count -eq 0) {
+  Write-Host "STATUS: PARTIAL/NEEDS REVIEW  (matched where present, but skipped: $($v4Skip -join ', '))"; Set-Res 'V4' 'NEEDS REVIEW'
+} else {
+  Write-Host "STATUS: FAIL  (mismatch: $($v4Bad -join ', '))"; Set-Res 'V4' 'FAIL'
+}
+STATUS: PASS  (6/6 destination hashes match their sidecars)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V5  --  33 Research months present under data\ticks\XAUUSD: exactly 2022/10 .. 2025/06, no holes"
+
+=====================================================================
+V5  --  33 Research months present under data\ticks\XAUUSD: exactly 2022/10 .. 2025/06, no holes
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $expected = @()
+PS C:\Users\User\Trading-startegy-ai> $y = 2022; $mm = 10
+PS C:\Users\User\Trading-startegy-ai> while ( ($y -lt 2025) -or (($y -eq 2025) -and ($mm -le 6)) ) {
+  $expected += ('{0:0000}/{1:00}' -f $y, $mm)
+  $mm++; if ($mm -gt 12) { $mm = 1; $y++ }
+}
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  expected Research months (count=$($expected.Count)):"
+EVIDENCE  expected Research months (count=33):
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("          " + ($expected -join ' '))
+          2022/10 2022/11 2022/12 2023/01 2023/02 2023/03 2023/04 2023/05 2023/06 2023/07 2023/08 2023/09 2023/10 2023/11 2023/12 2024/01 2024/02 2024/03 2024/04 2024/05 2024/06 2024/07 2024/08 2024/09 2024/10 2024/11 2024/12 2025/01 2025/02 2025/03 2025/04 2025/05 2025/06
+PS C:\Users\User\Trading-startegy-ai> $actualTicks = @()
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path -LiteralPath $TicksRoot) {
+  $actualTicks = Get-ChildItem -LiteralPath $TicksRoot -Recurse -File |
+    Where-Object { $_.Name -like '*.parquet' } |
+    ForEach-Object { '{0}/{1}' -f $_.Directory.Name, $_.BaseName } |
+    Sort-Object
+}
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  actual .parquet months under data\ticks\XAUUSD (count=$($actualTicks.Count)):"
+EVIDENCE  actual .parquet months under data\ticks\XAUUSD (count=33):
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("          " + ($actualTicks -join ' '))
+          2022/10 2022/11 2022/12 2023/01 2023/02 2023/03 2023/04 2023/05 2023/06 2023/07 2023/08 2023/09 2023/10 2023/11 2023/12 2024/01 2024/02 2024/03 2024/04 2024/05 2024/06 2024/07 2024/08 2024/09 2024/10 2024/11 2024/12 2025/01 2025/02 2025/03 2025/04 2025/05 2025/06
+PS C:\Users\User\Trading-startegy-ai> $v5Missing = @($expected | Where-Object { $actualTicks -notcontains $_ })
+PS C:\Users\User\Trading-startegy-ai> $v5Extra   = @($actualTicks | Where-Object { $expected -notcontains $_ })
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  missing vs expected : $(if($v5Missing.Count){$v5Missing -join ' '}else{'(none)'})"
+EVIDENCE  missing vs expected : (none)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  extra   vs expected : $(if($v5Extra.Count){$v5Extra -join ' '}else{'(none)'})"
+EVIDENCE  extra   vs expected : (none)
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath $TicksRoot)) {
+  Write-Host "STATUS: N/A  (data\ticks\XAUUSD does not exist)"; Set-Res 'V5' 'N/A'
+} elseif ($actualTicks.Count -eq 33 -and $v5Missing.Count -eq 0 -and $v5Extra.Count -eq 0) {
+  Write-Host "STATUS: PASS  (exactly 33 contiguous Research months 2022/10..2025/06)"; Set-Res 'V5' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  (count=$($actualTicks.Count), missing=$($v5Missing.Count), extra=$($v5Extra.Count))"; Set-Res 'V5' 'FAIL'
+}
+STATUS: PASS  (exactly 33 contiguous Research months 2022/10..2025/06)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V6  --  HoldoutGuard blocks read without holdout_unlock"
+
+=====================================================================
+V6  --  HoldoutGuard blocks read without holdout_unlock
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $pyV6 = @'
+import sys, traceback
+from datetime import UTC, datetime
+from pathlib import Path
+sys.path.insert(0, ".")
+from src.data.holdout import HoldoutGuard, XAUUSD_HOLDOUT_RANGE
+from src.data.tick_store import HoldoutAccessDenied
+
+probe = Path("V6_PROBE_MUST_NEVER_EXIST.jsonl")
+print("probe log exists BEFORE :", probe.exists())
+print("XAUUSD_HOLDOUT_RANGE    :", XAUUSD_HOLDOUT_RANGE.start, "..", XAUUSD_HOLDOUT_RANGE.end)
+guard = HoldoutGuard(Path("data/holdout"), probe)
+try:
+    guard.load("XAUUSD",
+               datetime(2025, 8, 1, tzinfo=UTC),
+               datetime(2025, 9, 1, tzinfo=UTC),
+               XAUUSD_HOLDOUT_RANGE)
+    print("V6_RESULT=FAIL  (guard.load returned WITHOUT raising)")
+except HoldoutAccessDenied as e:
+    print("V6_RESULT=PASS  HoldoutAccessDenied:", e)
+except Exception as e:
+    print("V6_RESULT=NEEDSREVIEW  unexpected", type(e).__name__, ":", e)
+    traceback.print_exc()
+print("probe log exists AFTER  :", probe.exists())
+'@
+PS C:\Users\User\Trading-startegy-ai> $outV6 = ($pyV6 | uv run python - 2>&1 | Out-String)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE (raw python output):"
+EVIDENCE (raw python output):
+PS C:\Users\User\Trading-startegy-ai> Write-Host $outV6
+probe log exists BEFORE : False
+XAUUSD_HOLDOUT_RANGE    : 2025-07-01 00:00:00+00:00 .. 2025-12-31 00:00:00+00:00
+V6_RESULT=PASS  HoldoutAccessDenied: refusing to load hold-out range 2025-07-01 00:00:00+00:00..2025-12-31 00:00:00+00:00 without holdout_unlock=True
+probe log exists AFTER  : False
+PS C:\Users\User\Trading-startegy-ai> if     ($outV6 -match 'V6_RESULT=PASS')        { Write-Host "STATUS: PASS"; Set-Res 'V6' 'PASS' }
+STATUS: PASS
+PS C:\Users\User\Trading-startegy-ai> elseif ($outV6 -match 'V6_RESULT=FAIL')        { Write-Host "STATUS: FAIL"; Set-Res 'V6' 'FAIL' }
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program. Check 
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV6 -match 'V6_RESULT=FAIL')        { Write-Host "STATUS:  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV6 -match 'V6_RESULT=FAIL')        { Write-Host "STATUS:  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> elseif ($outV6 -match 'V6_RESULT=NEEDSREVIEW') { Write-Host "STATUS: NEEDS REVIEW"; Set-Res 'V6' 'NEEDS REVIEW' }
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program. Check 
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV6 -match 'V6_RESULT=NEEDSREVIEW') { Write-Host "STATUS:  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV6 -match 'V6_RESULT=NEEDSREVIEW') { Write-Host "STATUS:  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> else                                           { Write-Host "STATUS: N/A  (no result marker -- see raw output)"; Set-Res 'V6' 'N/A' }
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                           { Write-Host "STATUS:  ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                           { Write-Host "STATUS:  ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V7  --  Track-A fail-closed enforcement still works on data\ticks"
+
+=====================================================================
+V7  --  Track-A fail-closed enforcement still works on data\ticks
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $pyV7 = @'
+import sys, traceback
+from pathlib import Path
+sys.path.insert(0, ".")
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE
+from src.data.tick_store import HoldoutAccessDenied, TickParquetStore
+
+checks = {}
+
+store = TickParquetStore(Path("data/ticks"), holdout_range=XAUUSD_HOLDOUT_RANGE)
+print("store.root           :", store.root)
+print("store.holdout_range  :", store.holdout_range.start, "..", store.holdout_range.end)
+print("store.holdout_unlock :", store.holdout_unlock)
+
+# A) hold-out month must be DENIED
+try:
+    store.read_month("XAUUSD", 2025, 9)
+    checks["A_holdout_denied"] = False
+    print("A) read_month(2025,09) -> returned data  [UNEXPECTED]")
+except HoldoutAccessDenied as e:
+    checks["A_holdout_denied"] = True
+    print("A) read_month(2025,09) -> HoldoutAccessDenied:", e)
+except Exception as e:
+    checks["A_holdout_denied"] = False
+    print("A) read_month(2025,09) -> UNEXPECTED", type(e).__name__, ":", e)
+
+# B) non-hold-out month must still be ALLOWED
+try:
+    df = store.read_month("XAUUSD", 2025, 6)
+    checks["B_research_allowed"] = True
+    print("B) read_month(2025,06) -> OK, rows =", df.height)
+except Exception as e:
+    checks["B_research_allowed"] = False
+    print("B) read_month(2025,06) -> UNEXPECTED", type(e).__name__, ":", e)
+
+# C) constructor without holdout_range must be impossible
+try:
+    TickParquetStore(Path("data/ticks"))
+    checks["C_range_mandatory"] = False
+    print("C) TickParquetStore(root) with no holdout_range -> CONSTRUCTED  [UNEXPECTED]")
+except TypeError as e:
+    checks["C_range_mandatory"] = True
+    print("C) TickParquetStore(root) with no holdout_range -> TypeError:", e)
+
+# D) unprotected() must require a reason
+try:
+    TickParquetStore.unprotected(Path("data/ticks"), reason="")
+    checks["D_unprotected_needs_reason"] = False
+    print("D) unprotected(reason='') -> CONSTRUCTED  [UNEXPECTED]")
+except ValueError as e:
+    checks["D_unprotected_needs_reason"] = True
+    print("D) unprotected(reason='') -> ValueError:", e)
+
+# E) holdout_unlock=True must require reason + usage_log_path
+try:
+    TickParquetStore(Path("data/ticks"), holdout_range=XAUUSD_HOLDOUT_RANGE, holdout_unlock=True)
+    checks["E_unlock_needs_audit"] = False
+    print("E) holdout_unlock=True with no reason/log -> CONSTRUCTED  [UNEXPECTED]")
+except ValueError as e:
+    checks["E_unlock_needs_audit"] = True
+    print("E) holdout_unlock=True with no reason/log -> ValueError:", e)
+
+print("CHECKS:", checks)
+print("V7_RESULT=" + ("PASS" if all(checks.values()) else "FAIL"))
+'@
+PS C:\Users\User\Trading-startegy-ai> $outV7 = ($pyV7 | uv run python - 2>&1 | Out-String)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE (raw python output):"
+EVIDENCE (raw python output):
+PS C:\Users\User\Trading-startegy-ai> Write-Host $outV7
+store.root           : data\ticks
+store.holdout_range  : 2025-07-01 00:00:00+00:00 .. 2025-12-31 00:00:00+00:00
+store.holdout_unlock : False
+A) read_month(2025,09) -> HoldoutAccessDenied: refusing to read XAUUSD 2025-09: overlaps hold-out range 2025-07-01..2025-12-31 without holdout_unlock=True
+B) read_month(2025,06) -> OK, rows = 4752206
+C) TickParquetStore(root) with no holdout_range -> TypeError: TickParquetStore.__init__() missing 1 required keyword-only argument: 'holdout_range'
+D) unprotected(reason='') -> ValueError: unprotected() requires a non-empty reason
+E) holdout_unlock=True with no reason/log -> ValueError: holdout_unlock=True requires a non-empty unlock_reason
+CHECKS: {'A_holdout_denied': True, 'B_research_allowed': True, 'C_range_mandatory': True, 'D_unprotected_needs_reason': True, 'E_unlock_needs_audit': True}
+V7_RESULT=PASS
+PS C:\Users\User\Trading-startegy-ai> if     ($outV7 -match 'V7_RESULT=PASS') { Write-Host "STATUS: PASS"; Set-Res 'V7' 'PASS' }
+STATUS: PASS
+PS C:\Users\User\Trading-startegy-ai> elseif ($outV7 -match 'V7_RESULT=FAIL') { Write-Host "STATUS: FAIL"; Set-Res 'V7' 'FAIL' }
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program. Check 
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV7 -match 'V7_RESULT=FAIL') { Write-Host "STATUS: FAIL";  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV7 -match 'V7_RESULT=FAIL') { Write-Host "STATUS: FAIL";  ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> else                                    { Write-Host "STATUS: N/A  (no result marker -- see raw output)"; Set-Res 'V7' 'N/A' }
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                    { Write-Host "STATUS: N/A  (n ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                    { Write-Host "STATUS: N/A  (n ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V8  --  explicit, independent 6/6 sidecar check under data\holdout"
+
+=====================================================================
+V8  --  explicit, independent 6/6 sidecar check under data\holdout
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v8List = @()
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path -LiteralPath 'data\holdout') {
+  $v8List = Get-ChildItem -LiteralPath 'data\holdout' -Recurse -File |
+    Where-Object { $_.Name -like '*.sha256' } | Sort-Object FullName
+}
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  recursive scan of data\holdout for *.sha256 (count=$($v8List.Count)):"
+EVIDENCE  recursive scan of data\holdout for *.sha256 (count=6):
+PS C:\Users\User\Trading-startegy-ai> foreach ($f in $v8List) { Write-Host ("          {0}   ({1} bytes)" -f $f.FullName, $f.Length) }
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\07.parquet.sha256   (64 bytes)
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\08.parquet.sha256   (64 bytes)
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\09.parquet.sha256   (64 bytes)
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\10.parquet.sha256   (64 bytes)
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\11.parquet.sha256   (64 bytes)
+          C:\Users\User\Trading-startegy-ai\data\holdout\XAUUSD\2025\12.parquet.sha256   (64 bytes)
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath 'data\holdout')) {
+  Write-Host "STATUS: N/A  (data\holdout does not exist)"; Set-Res 'V8' 'N/A'
+} elseif ($v8List.Count -eq 6) {
+  Write-Host "STATUS: PASS  (exactly 6 sidecar files under data\holdout)"; Set-Res 'V8' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  (expected 6 sidecars, found $($v8List.Count))"; Set-Res 'V8' 'FAIL'
+}
+STATUS: PASS  (exactly 6 sidecar files under data\holdout)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V9  --  explicit negation: ANY file for 2025/07..12 anywhere under data\ticks"
+
+=====================================================================
+V9  --  explicit negation: ANY file for 2025/07..12 anywhere under data\ticks
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v9Hits = @()
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path -LiteralPath 'data\ticks') {
+  $v9Hits = Get-ChildItem -LiteralPath 'data\ticks' -Recurse -File |
+    Where-Object { $_.FullName -match '\\2025\\(07|08|09|10|11|12)\.parquet(\.sha256)?$' } |
+    Sort-Object FullName
+}
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  recursive scan of data\ticks for 2025\{07..12}.parquet[.sha256] :"
+EVIDENCE  recursive scan of data\ticks for 2025\{07..12}.parquet[.sha256] :
+PS C:\Users\User\Trading-startegy-ai> if ($v9Hits.Count -eq 0) { Write-Host "          (no matches -- 0 files)" }
+          (no matches -- 0 files)
+PS C:\Users\User\Trading-startegy-ai> else { foreach ($f in $v9Hits) { Write-Host ("          {0}" -f $f.FullName) } }
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else { foreach ($f in $v9Hits) { Write-Host ("          {0}" -f $f.Fu ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else { foreach ($f in $v9Hits) { Write-Host ("          {0}" -f $f.Fu ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  full recursive file count under data\ticks: $(@(Get-ChildItem -LiteralPath 'data\ticks' -Recurse -File -ErrorAction SilentlyContinue).Count)"
+EVIDENCE  full recursive file count under data\ticks: 67
+PS C:\Users\User\Trading-startegy-ai> if (-not (Test-Path -LiteralPath 'data\ticks')) {
+  Write-Host "STATUS: N/A  (data\ticks does not exist)"; Set-Res 'V9' 'N/A'
+} elseif ($v9Hits.Count -eq 0) {
+  Write-Host "STATUS: PASS  (0 hold-out-month artefacts remain under data\ticks)"; Set-Res 'V9' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  ($($v9Hits.Count) hold-out artefact(s) still under data\ticks)"; Set-Res 'V9' 'FAIL'
+}
+STATUS: PASS  (0 hold-out-month artefacts remain under data\ticks)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V10 --  counts: 33 Research parquet + 6 Hold-out parquet = 39, no holes, no duplicates"
+
+=====================================================================
+V10 --  counts: 33 Research parquet + 6 Hold-out parquet = 39, no holes, no duplicates
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $holdoutParquet = @()
+PS C:\Users\User\Trading-startegy-ai> if (Test-Path -LiteralPath 'data\holdout') {
+  $holdoutParquet = Get-ChildItem -LiteralPath 'data\holdout' -Recurse -File |
+    Where-Object { $_.Name -like '*.parquet' } |
+    ForEach-Object { '{0}/{1}' -f $_.Directory.Name, $_.BaseName } | Sort-Object
+}
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  Research parquet count (data\ticks)   : $($actualTicks.Count)"
+EVIDENCE  Research parquet count (data\ticks)   : 33
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  Hold-out parquet count (data\holdout) : $($holdoutParquet.Count)"
+EVIDENCE  Hold-out parquet count (data\holdout) : 6
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  Hold-out months: $($holdoutParquet -join ' ')"
+EVIDENCE  Hold-out months: 2025/07 2025/08 2025/09 2025/10 2025/11 2025/12
+PS C:\Users\User\Trading-startegy-ai> $total = $actualTicks.Count + $holdoutParquet.Count
+PS C:\Users\User\Trading-startegy-ai> $overlap = @($actualTicks | Where-Object { $holdoutParquet -contains $_ })
+PS C:\Users\User\Trading-startegy-ai> $union = @(($actualTicks + $holdoutParquet) | Sort-Object -Unique)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  33+6 arithmetic : $($actualTicks.Count) + $($holdoutParquet.Count) = $total"
+EVIDENCE  33+6 arithmetic : 33 + 6 = 39
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  duplicated months present in BOTH roots: $(if($overlap.Count){$overlap -join ' '}else{'(none)'})"
+EVIDENCE  duplicated months present in BOTH roots: (none)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  unique months across both roots        : $($union.Count)"
+EVIDENCE  unique months across both roots        : 39
+PS C:\Users\User\Trading-startegy-ai> $expectedFull = @()
+PS C:\Users\User\Trading-startegy-ai> $y = 2022; $mm = 10
+PS C:\Users\User\Trading-startegy-ai> while ( ($y -lt 2025) -or (($y -eq 2025) -and ($mm -le 12)) ) {
+  $expectedFull += ('{0:0000}/{1:00}' -f $y, $mm)
+  $mm++; if ($mm -gt 12) { $mm = 1; $y++ }
+}
+PS C:\Users\User\Trading-startegy-ai> $v10Missing = @($expectedFull | Where-Object { $union -notcontains $_ })
+PS C:\Users\User\Trading-startegy-ai> $v10Extra   = @($union | Where-Object { $expectedFull -notcontains $_ })
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  expected full span 2022/10..2025/12 count: $($expectedFull.Count)"
+EVIDENCE  expected full span 2022/10..2025/12 count: 39
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  missing from union : $(if($v10Missing.Count){$v10Missing -join ' '}else{'(none)'})"
+EVIDENCE  missing from union : (none)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  extra   in union   : $(if($v10Extra.Count){$v10Extra -join ' '}else{'(none)'})"
+EVIDENCE  extra   in union   : (none)
+PS C:\Users\User\Trading-startegy-ai> if ((-not (Test-Path -LiteralPath 'data\ticks')) -or (-not (Test-Path -LiteralPath 'data\holdout'))) {
+  Write-Host "STATUS: N/A  (one of the two data roots is missing)"; Set-Res 'V10' 'N/A'
+} elseif ($actualTicks.Count -eq 33 -and $holdoutParquet.Count -eq 6 -and $total -eq 39 -and
+          $overlap.Count -eq 0 -and $union.Count -eq 39 -and $v10Missing.Count -eq 0 -and $v10Extra.Count -eq 0) {
+  Write-Host "STATUS: PASS  (33 + 6 = 39, contiguous 2022/10..2025/12, no duplicates, no loss)"; Set-Res 'V10' 'PASS'
+} else {
+  Write-Host "STATUS: FAIL  (see counts above)"; Set-Res 'V10' 'FAIL'
+}
+STATUS: PASS  (33 + 6 = 39, contiguous 2022/10..2025/12, no duplicates, no loss)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V11 --  independent SHA256 recompute at destination vs KNOWN pre-move hashes"
+
+=====================================================================
+V11 --  independent SHA256 recompute at destination vs KNOWN pre-move hashes
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $v11Bad = @(); $v11Skip = @()
+PS C:\Users\User\Trading-startegy-ai> foreach ($m in $HoldMonths) {
+  $pq = Join-Path $HoldoutRoot "2025\$m.parquet"
+  $known = $KnownHashes[$m]
+  Write-Host "EVIDENCE  2025-$m"
+  Write-Host ("          known(pre-move) = {0}   (len={1})" -f $known, $known.Length)
+  if (-not (Test-Path -LiteralPath $pq)) {
+    Write-Host "          computed        = (file not found: $pq)"
+    Write-Host "          match           = N/A"
+    $v11Skip += $m; continue
+  }
+  $computed = (Get-FileHash -LiteralPath $pq -Algorithm SHA256).Hash.ToLower()
+  $ok = ($computed -eq $known)
+  Write-Host ("          computed(dest)  = {0}   (len={1})" -f $computed, $computed.Length)
+  Write-Host ("          match           = {0}" -f $ok)
+  if (-not $ok) { $v11Bad += $m }
+}
+EVIDENCE  2025-07
+          known(pre-move) = 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557   (len=64)
+          computed(dest)  = 17c8470097e26b04133b71a6fcd6881bf97dc55fafa512147411c3568e529557   (len=64)
+          match           = True
+EVIDENCE  2025-08
+          known(pre-move) = 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461   (len=64)
+          computed(dest)  = 1904258acf1708a43fdeafd89ed51ad17a2735bcddb5ae13c0946ec596c19461   (len=64)
+          match           = True
+EVIDENCE  2025-09
+          known(pre-move) = e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd   (len=64)
+          computed(dest)  = e4b541f5b9a52293384350236b5d0df5d548d70599cda86991b8b9192fc0b4cd   (len=64)
+          match           = True
+EVIDENCE  2025-10
+          known(pre-move) = ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a   (len=64)
+          computed(dest)  = ce8189398198dcc82d94f85bf6ceee4d07f1fcbaa4a0ce3de6c0a03b0bfcb74a   (len=64)
+          match           = True
+EVIDENCE  2025-11
+          known(pre-move) = 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842   (len=64)
+          computed(dest)  = 6eb167305684467f54984b11819873b852d5d093b55d68913817254ab37e1842   (len=64)
+          match           = True
+EVIDENCE  2025-12
+          known(pre-move) = 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820   (len=64)
+          computed(dest)  = 268ca8c7347834e844341f5d8f17626c1d1e3ecef5e4ce937919eb0c068dc820   (len=64)
+          match           = True
+PS C:\Users\User\Trading-startegy-ai> if ($v11Skip.Count -eq 6) {
+  Write-Host "STATUS: N/A  (no destination parquet files found to recompute)"; Set-Res 'V11' 'N/A'
+} elseif ($v11Bad.Count -eq 0 -and $v11Skip.Count -eq 0) {
+  Write-Host "STATUS: PASS  (6/6 destination hashes byte-identical to known pre-move hashes)"; Set-Res 'V11' 'PASS'
+} elseif ($v11Bad.Count -eq 0) {
+  Write-Host "STATUS: NEEDS REVIEW  (matched where present; not evaluable: $($v11Skip -join ', '))"; Set-Res 'V11' 'NEEDS REVIEW'
+} else {
+  Write-Host "STATUS: FAIL  (hash mismatch: $($v11Bad -join ', '))"; Set-Res 'V11' 'FAIL'
+}
+STATUS: PASS  (6/6 destination hashes byte-identical to known pre-move hashes)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V12 --  post-mutation: read_month(2025,07) and read_month(2025,12) must raise HoldoutAccessDenied"
+
+=====================================================================
+V12 --  post-mutation: read_month(2025,07) and read_month(2025,12) must raise HoldoutAccessDenied
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> $pyV12 = @'
+import sys
+from pathlib import Path
+sys.path.insert(0, ".")
+from src.data.holdout import XAUUSD_HOLDOUT_RANGE
+from src.data.tick_store import HoldoutAccessDenied, TickParquetStore
+
+store = TickParquetStore(Path("data/ticks"), holdout_range=XAUUSD_HOLDOUT_RANGE)
+print("holdout_unlock (must be False):", store.holdout_unlock)
+
+results = {}
+for (y, m) in [(2025, 7), (2025, 12)]:
+    try:
+        df = store.read_month("XAUUSD", y, m)
+        results[(y, m)] = False
+        print(f"read_month({y},{m:02d}) -> RETURNED {df.height} rows  [UNEXPECTED]")
+    except HoldoutAccessDenied as e:
+        results[(y, m)] = True
+        print(f"read_month({y},{m:02d}) -> HoldoutAccessDenied: {e}")
+    except Exception as e:
+        results[(y, m)] = False
+        print(f"read_month({y},{m:02d}) -> UNEXPECTED {type(e).__name__}: {e}")
+
+print("RESULTS:", results)
+print("V12_RESULT=" + ("PASS" if all(results.values()) else "FAIL"))
+'@
+PS C:\Users\User\Trading-startegy-ai> $outV12 = ($pyV12 | uv run python - 2>&1 | Out-String)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE (raw python output):"
+EVIDENCE (raw python output):
+PS C:\Users\User\Trading-startegy-ai> Write-Host $outV12
+holdout_unlock (must be False): False
+read_month(2025,07) -> HoldoutAccessDenied: refusing to read XAUUSD 2025-07: overlaps hold-out range 2025-07-01..2025-12-31 without holdout_unlock=True
+read_month(2025,12) -> HoldoutAccessDenied: refusing to read XAUUSD 2025-12: overlaps hold-out range 2025-07-01..2025-12-31 without holdout_unlock=True
+RESULTS: {(2025, 7): True, (2025, 12): True}
+V12_RESULT=PASS
+PS C:\Users\User\Trading-startegy-ai> if     ($outV12 -match 'V12_RESULT=PASS') { Write-Host "STATUS: PASS"; Set-Res 'V12' 'PASS' }
+STATUS: PASS
+PS C:\Users\User\Trading-startegy-ai> elseif ($outV12 -match 'V12_RESULT=FAIL') { Write-Host "STATUS: FAIL"; Set-Res 'V12' 'FAIL' }
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program. Check 
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV12 -match 'V12_RESULT=FAIL') { Write-Host "STATUS: FAIL" ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+elseif : The term 'elseif' is not recognized as the name of a cmdlet, function, script file, or operable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ elseif ($outV12 -match 'V12_RESULT=FAIL') { Write-Host "STATUS: FAIL" ...
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (elseif:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> else                                      { Write-Host "STATUS: N/A  (no result marker -- see raw output)"; Set-Res 'V12' 'N/A' }
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                      { Write-Host "STATUS: N/A   ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else                                      { Write-Host "STATUS: N/A   ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "V13 --  repeat DRY-RUN of run_separate_holdout.py (NO --confirm)"
+
+=====================================================================
+V13 --  repeat DRY-RUN of run_separate_holdout.py (NO --confirm)
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> Write-Host "COMMAND: uv run python scripts\tools\run_separate_holdout.py --ticks-dir data\ticks --holdout-dir data\holdout"
+COMMAND: uv run python scripts\tools\run_separate_holdout.py --ticks-dir data\ticks --holdout-dir data\holdout
+PS C:\Users\User\Trading-startegy-ai> $outV13 = (uv run python scripts\tools\run_separate_holdout.py --ticks-dir data\ticks --holdout-dir data\holdout 2>&1 | Out-String)
+PS C:\Users\User\Trading-startegy-ai> $codeV13 = $LASTEXITCODE
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE (raw output):"
+EVIDENCE (raw output):
+PS C:\Users\User\Trading-startegy-ai> Write-Host $outV13
+=== Pre-Flight ===
+XAUUSD_HOLDOUT_RANGE: 2025-07-01 00:00:00+00:00 .. 2025-12-31 00:00:00+00:00
+Hold-out months (computed from code): [(2025, 7), (2025, 8), (2025, 9), (2025, 10), (2025, 11), (2025, 12)]
+uv : 
+At line:1 char:12
++ $outV13 = (uv run python scripts\tools\run_separate_holdout.py --tick ...
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PRE-FLIGHT FAILED: data\holdout already exists and is not empty (14 entries) -- refusing to risk collision with a 
+prior/partial run
+STOPPING. No files were moved. No auto-repair attempted.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "EVIDENCE  exit code = $codeV13"
+EVIDENCE  exit code = 1
+PS C:\Users\User\Trading-startegy-ai> if ($outV13 -match 'already exists and is not empty') {
+  Write-Host "STATUS: PASS  (Pre-Flight detected the already-separated destination and refused to move anything)"
+  Set-Res 'V13' 'PASS'
+} elseif ($outV13 -match 'expected exactly 39 months') {
+  Write-Host "STATUS: NEEDS REVIEW  (runner still expects 39 months under data\ticks -- report to reviewer, NOT auto-PASS)"
+  Set-Res 'V13' 'NEEDS REVIEW'
+} elseif ($outV13 -match 'DRY-RUN') {
+  Write-Host "STATUS: NEEDS REVIEW  (dry-run completed and would propose moving files again -- unexpected post-mutation)"
+  Set-Res 'V13' 'NEEDS REVIEW'
+} else {
+  Write-Host "STATUS: NEEDS REVIEW  (unclassified output -- see raw output above)"
+  Set-Res 'V13' 'NEEDS REVIEW'
+}
+STATUS: PASS  (Pre-Flight detected the already-separated destination and refused to move anything)
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "RO-GUARD (AFTER)  --  proof nothing was written"
+
+=====================================================================
+RO-GUARD (AFTER)  --  proof nothing was written
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> Write-Host "git status --short (AFTER):"
+git status --short (AFTER):
+PS C:\Users\User\Trading-startegy-ai> $RoAfter = (git status --short | Out-String)
+PS C:\Users\User\Trading-startegy-ai> Write-Host $RoAfter
+?? docgate_step1b.txt
+?? docgate_step2.txt
+?? docgate_step3.txt
+?? docgate_step4.txt
+?? docgate_step5.txt
+?? docgate_step6.txt
+?? ps.txt
+?? rrr.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "V6 probe file must NOT exist: $(Test-Path -LiteralPath 'V6_PROBE_MUST_NEVER_EXIST.jsonl')"
+V6 probe file must NOT exist: False
+PS C:\Users\User\Trading-startegy-ai> if ($RoBefore -eq $RoAfter) { Write-Host "RO-GUARD: PASS  (git status identical before/after)" }
+RO-GUARD: PASS  (git status identical before/after)
+PS C:\Users\User\Trading-startegy-ai> else { Write-Host "RO-GUARD: FAIL  (working tree changed during verification -- INVESTIGATE)" }
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else { Write-Host "RO-GUARD: FAIL  (working tree changed during verif ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+else : The term 'else' is not recognized as the name of a cmdlet, function, script file, or operable program. Check
+the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ else { Write-Host "RO-GUARD: FAIL  (working tree changed during verif ...
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (else:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\User\Trading-startegy-ai> # ---------------------------------------------------------------------
+PS C:\Users\User\Trading-startegy-ai> Hdr "SUMMARY  --  B.2 POST-FLIGHT V1..V13"
+
+=====================================================================
+SUMMARY  --  B.2 POST-FLIGHT V1..V13
+=====================================================================
+PS C:\Users\User\Trading-startegy-ai> foreach ($k in $Status.Keys) { Write-Host ("{0,-4} = {1}" -f $k, $Status[$k]) }
+V1   = PASS
+V2   = PASS
+V3   = PASS
+V4   = PASS
+V5   = PASS
+V6   = PASS
+V7   = PASS
+V8   = PASS
+V9   = PASS
+V10  = PASS
+V11  = PASS
+V12  = PASS
+V13  = PASS
+PS C:\Users\User\Trading-startegy-ai> Write-Host ""
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("PASS         : {0}" -f @($Status.Values | Where-Object { $_ -eq 'PASS' }).Count)
+PASS         : 13
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("FAIL         : {0}" -f @($Status.Values | Where-Object { $_ -eq 'FAIL' }).Count)
+FAIL         : 0
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("NEEDS REVIEW : {0}" -f @($Status.Values | Where-Object { $_ -eq 'NEEDS REVIEW' }).Count)
+NEEDS REVIEW : 0
+PS C:\Users\User\Trading-startegy-ai> Write-Host ("N/A          : {0}" -f @($Status.Values | Where-Object { $_ -eq 'N/A' }).Count)
+N/A          : 0
+PS C:\Users\User\Trading-startegy-ai> Write-Host ""
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "END OF READ-ONLY POST-FLIGHT VERIFICATION"
+END OF READ-ONLY POST-FLIGHT VERIFICATION

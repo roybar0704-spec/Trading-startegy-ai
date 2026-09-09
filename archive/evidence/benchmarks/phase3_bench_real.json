@@ -1,0 +1,34 @@
+{
+  "measured_at": "2026-08-25T11:43:01.961496+00:00",
+  "data_source": "real (TickParquetStore, D-073-guarded, excludes Hold-Out)",
+  "months": [
+    "2024-01",
+    "2024-02",
+    "2024-03"
+  ],
+  "arm": "M2xS_body",
+  "tick_count": 7919469,
+  "bar_counts": {
+    "1M": 86725,
+    "5M": 17350,
+    "4H": 379
+  },
+  "seconds": 103.3839,
+  "budget_seconds": 300,
+  "within_budget": true,
+  "peak_rss_mb": 3426.7,
+  "counters": {
+    "engaged": 6962,
+    "reaction_seen": 33,
+    "sweep_confirmed": 14,
+    "armed": 5,
+    "expired": 6928,
+    "invalidated": 29,
+    "no_ifvg": 0,
+    "orders_placed": 2,
+    "orders_rejected": 3,
+    "fills": 4,
+    "orders_cancelled": 0
+  },
+  "note": "Diagnostic-only (B-8 Pre-Flight). NOT T3.4, not a declared Experiment, journal=None (no data/registry/runs.jsonl write). Does not close any Research Readiness Review checklist item on its own."
+}

@@ -1,0 +1,102 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260811175452
+Username: DESKTOP-FLTJTEB\User
+RunAs User: DESKTOP-FLTJTEB\User
+Configuration Name: 
+Machine: DESKTOP-FLTJTEB (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 22348
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is docgate_step3.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P1. CI.SH — does it enforce Prefix-Consistency? (closes PRJ-1) ===" -ForegroundColor Cyan
+
+=== P1. CI.SH — does it enforce Prefix-Consistency? (closes PRJ-1) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:scripts/ci.sh
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P2. PREFIX-CONSISTENCY TEST EXISTS? ===" -ForegroundColor Cyan
+
+=== P2. PREFIX-CONSISTENCY TEST EXISTS? ===
+PS C:\Users\User\Trading-startegy-ai> git ls-tree -r --name-only f9a8d22 -- tests | Select-String -Pattern 'prefix|lookahead|golden|repro|dst'
+
+tests/golden/at3_14_baseline.sha256
+tests/test_at0_4_dst_build.py
+tests/test_at1_6_prefix_consistency.py
+tests/test_golden_regression.py
+
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P3. CLAUDE.md REPO-STRUCTURE SECTION (closes DG-6) ===" -ForegroundColor Cyan
+
+=== P3. CLAUDE.md REPO-STRUCTURE SECTION (closes DG-6) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:CLAUDE.md | Select-String -Pattern '^#{1,6}\s|מבנה הריפו' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| # CLAUDE.md — XAUUSD Research Platform
+   3| ## מה הפרויקט
+   8| ## חוק-העל (Prime Directive)
+  20| ## חוקי הנדסה מחייבים
+  31| ## מבנה הריפו
+  68| ## סטאק
+  72| ## סדר קריאה חובה לפני כל משימה
+  78| ## דגשי סימולציה קריטיים (תזכורת)
+  84| ## דוח סיום Phase (חובה, לפני בקשת אישור)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P4. ARCHITECTURE LAYERS 4..25 RAW ===" -ForegroundColor Cyan
+
+=== P4. ARCHITECTURE LAYERS 4..25 RAW ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/ARCHITECTURE.md | Select-Object -Skip 3 -First 22 | ForEach-Object -Begin {$i=4} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+   4| ## שכבות
+   5| ```
+   6| Research: Statistics · Validation · Tracker · AI Analyst · Viz
+   7|    ▲
+   8| Journal (DuckDB): experiments · runs · portfolios · setups · orders · trades ·
+   9|                   fvg_registry · bias_history · news · sessions · equity · scores
+  10|    ▲ (כתיבה מהסימולטור בלבד)
+  11| Backtest Orchestrator:
+  12|    Event Loop (UTC) — עיבוד דו-שלבי לכל timestamp
+  13|    ├─ Session Engine (NY) ←→ Calendar Engine (Blackout)
+  14|    ├─ Structure: Fractals · BOS · Sweep · Bias-SM   (per TF)
+  15|    ├─ FVG Engine (detect · mitigation · ranking) + iFVG
+  16|    ├─ Displacement (D1 default; D2–D5 רמות ניסוי)
+  17|    ├─ Setup Stream — ה-State Machine (model-agnostic)
+  18|    ├─ Entry Arms: M1 · M2 · M4  →  SL Arms: R_body · S_body · S_wick
+  19|    ├─ Risk (0.5% realized · quota · geometry) — לכל תיק
+  20|    └─ Fill Simulator + Cost Model (Bid/Ask ticks · slippage · delay)
+  21|         ▲ MarketContext.as_of(now)  ← Point-in-Time State Store
+  22|    ▲
+  23| Data: DukascopyDownloader(bi5+LZMA, cache immutable) → Validator → BarBuilder(anchor=NY-Close) → Parquet
+  24| ```
+  25|
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== P5. ARCHITECTURE MODULE TABLE 55..73 RAW ===" -ForegroundColor Cyan
+
+=== P5. ARCHITECTURE MODULE TABLE 55..73 RAW ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/ARCHITECTURE.md | Select-Object -Skip 54 -First 19 | ForEach-Object -Begin {$i=55} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+  55| ## מודולים — אחריות בשורה
+  56| | מודול | אחריות |
+  57| |---|---|
+  58| | data | הורדה, ולידציה, בניית נרות, גרסוּה |
+  59| | store | State Store + MarketContext (as-of) |
+  60| | structure | Fractals, BOS, Sweep, Bias-SM |
+  61| | fvg | זיהוי, Mitigation חי, דירוג, iFVG |
+  62| | displacement | D1–D5 פלאגביליים |
+  63| | session / calendar | חלון NY, Blackout, effective_window, תגי חג |
+  64| | entry | Setup Stream (State Machine) + M1/M2/M4 |
+  65| | risk | Sizing ממומש, מכסה, גאומטריה |
+  66| | execution | Fill Simulator + Cost Model |
+  67| | backtest | Orchestrator, Events, Portfolios |
+  68| | journal | כתיבה טרנזקציונית ל-DuckDB |
+  69| | stats | כל המדדים + פילוחים + MAE/MFE |
+  70| | validation | WF, Hold-Out Guard, Random Baseline (זוגי), Sensitivity |
+  71| | tracker | config_hash, רישום ריצות Append-Only |
+  72| | scoring / ai / viz | Log-Only Scoring · Analyst · Plotly per-trade |
+  73|
+PS C:\Users\User\Trading-startegy-ai> Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20260811175453
+**********************

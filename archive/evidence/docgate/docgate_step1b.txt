@@ -1,0 +1,102 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260811170835
+Username: DESKTOP-FLTJTEB\User
+RunAs User: DESKTOP-FLTJTEB\User
+Configuration Name: 
+Machine: DESKTOP-FLTJTEB (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 22348
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is docgate_step1b.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== A. HEAD DIVERGENCE ===" -ForegroundColor Cyan
+
+=== A. HEAD DIVERGENCE ===
+PS C:\Users\User\Trading-startegy-ai> git status --short --branch
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- local ahead of origin/main ---"
+--- local ahead of origin/main ---
+PS C:\Users\User\Trading-startegy-ai> git log --oneline origin/main..HEAD
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "--- origin/main ahead of local ---"
+--- origin/main ahead of local ---
+PS C:\Users\User\Trading-startegy-ai> git log --oneline HEAD..origin/main
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== B. README LINES 43-END ===" -ForegroundColor Cyan
+
+=== B. README LINES 43-END ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:README.md | Select-Object -Skip 42 | ForEach-Object -Begin {$i=43} -Process { "{0,4}: {1}" -f $i, $_; $i++ }
+  43: ```
+  44:
+  45: ## Known environment constraint
+  46:
+  47: Real historical tick data comes from Dukascopy (`docs/SPEC_V1_FROZEN.md` §1).
+  48: Acquiring it requires outbound network access to `datafeed.dukascopy.com`.
+  49: See `docs/KNOWN_ISSUES.md` for the current status of live data acquisition in
+  50: this environment; the data pipeline itself (downloader, validator, bar builder,
+  51: spread report, holdout isolation) is implemented and tested against synthetic
+  52: fixtures that reproduce Dukascopy's tick wire format.
+  53:
+  54: ## Repo layout
+  55:
+  56: See `CLAUDE.md` §"מבנה הריפו" for the full target tree.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== C. TESTS TREE (count + top level) ===" -ForegroundColor Cyan
+
+=== C. TESTS TREE (count + top level) ===
+PS C:\Users\User\Trading-startegy-ai> (git ls-tree -r --name-only f9a8d22 -- tests | Measure-Object).Count
+69
+PS C:\Users\User\Trading-startegy-ai> git ls-tree --name-only f9a8d22 -- tests/
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== D. B8 ARTIFACT SWEEP ===" -ForegroundColor Cyan
+
+=== D. B8 ARTIFACT SWEEP ===
+PS C:\Users\User\Trading-startegy-ai> git ls-tree -r --name-only f9a8d22 | Select-String -Pattern 'B8|B-8|b8'
+
+PREFLIGHT_B8.md
+scripts/diagnostics/run_b8_performance_real_data.py
+
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== E. CI PRESENCE ===" -ForegroundColor Cyan
+
+=== E. CI PRESENCE ===
+PS C:\Users\User\Trading-startegy-ai> git ls-tree -r --name-only f9a8d22 -- .github
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== F. STATE-FILE TRIAD — first 3 lines each ===" -ForegroundColor Cyan
+
+=== F. STATE-FILE TRIAD — first 3 lines each ===
+PS C:\Users\User\Trading-startegy-ai> foreach ($f in @('PROJECT_STATE.md','PROJECT_STATE_REPORT.md','HANDOFF_MASTER.md')) {
+  Write-Host "--- $f ---" -ForegroundColor Yellow
+  git show f9a8d22:$f | Select-Object -First 3
+  git log -1 --format='  last-commit: %h %ad %s' --date=short f9a8d22 -- $f
+}
+--- PROJECT_STATE.md ---
+# PROJECT STATE — Context Snapshot
+**Evidence Anchor:** 79b55bed96d4786178669cd8ef0aaf20b8ee8889
+**Snapshot:** 2026-08-11
+
+--- PROJECT_STATE_REPORT.md ---
+# PROJECT STATE REPORT — XAUUSD Research Platform
+
+> **⚠️ ARCHIVAL — סריקת-מצב חד-פעמית, קודמת ל-B-4. RA-10/KI-010/Backfill שתוארו כאן כ'לא-פתורים' כבר נסגרו/כויילו מאז. למצב עדכני ר': `docs/KNOWN_ISSUES.md`, `docs/DECISIONS_LOG.md`, `docs/RESEARCH_READINESS_REVIEW.md`.**
+
+--- HANDOFF_MASTER.md ---
+# HANDOFF MASTER — XAUUSD Research Platform
+
+> **⚠️ ARCHIVAL — חבילת-תכנון מקורית, קפואה מ-2026-07-08 (לפני Phase 0). "17 קבצים = מקור-האמת" אינו נכון עוד — הפרויקט כולל כיום 55+ מסמכים ו-Stage A שלם. למצב עדכני ר': `docs/KNOWN_ISSUES.md`, `docs/DECISIONS_LOG.md`, `docs/RESEARCH_READINESS_REVIEW.md`.**
+
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== END ===" -ForegroundColor Cyan
+
+=== END ===
+PS C:\Users\User\Trading-startegy-ai> Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20260811170837
+**********************

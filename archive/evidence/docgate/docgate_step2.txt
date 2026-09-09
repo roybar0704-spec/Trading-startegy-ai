@@ -1,0 +1,91 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260811174112
+Username: DESKTOP-FLTJTEB\User
+RunAs User: DESKTOP-FLTJTEB\User
+Configuration Name: 
+Machine: DESKTOP-FLTJTEB (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 22348
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is docgate_step2.txt
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R1. WHAT f9a8d22 CHANGED (closes Q1) ===" -ForegroundColor Cyan
+
+=== R1. WHAT f9a8d22 CHANGED (closes Q1) ===
+PS C:\Users\User\Trading-startegy-ai> git show --stat --oneline f9a8d22 | Select-Object -First 20
+f9a8d22 Record D-084: News Coverage expansion is Open Future Work, not B-8
+ docs/DECISIONS_LOG.md             | 1 +
+ docs/KNOWN_ISSUES.md              | 2 +-
+ docs/RESEARCH_ASSUMPTIONS_V1.md   | 2 +-
+ docs/RESEARCH_READINESS_REVIEW.md | 2 +-
+ 4 files changed, 4 insertions(+), 3 deletions(-)
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R2. README 43..END RAW (closes cond.3 + cond.4) ===" -ForegroundColor Cyan
+
+=== R2. README 43..END RAW (closes cond.3 + cond.4) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:README.md | Select-Object -Skip 42 | ForEach-Object -Begin {$i=43} -Process { "{0,4}| {1}" -f $i, $_; $i++ }
+  43| ```
+  44|
+  45| ## Known environment constraint
+  46|
+  47| Real historical tick data comes from Dukascopy (`docs/SPEC_V1_FROZEN.md` §1).
+  48| Acquiring it requires outbound network access to `datafeed.dukascopy.com`.
+  49| See `docs/KNOWN_ISSUES.md` for the current status of live data acquisition in
+  50| this environment; the data pipeline itself (downloader, validator, bar builder,
+  51| spread report, holdout isolation) is implemented and tested against synthetic
+  52| fixtures that reproduce Dukascopy's tick wire format.
+  53|
+  54| ## Repo layout
+  55|
+  56| See `CLAUDE.md` §"מבנה הריפו" for the full target tree.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== R3. WORK ORDER PROTOCOL — mandatory artifacts (closes GOV-1) ===" -ForegroundColor Cyan
+
+=== R3. WORK ORDER PROTOCOL — mandatory artifacts (closes GOV-1) ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:WORK_ORDER_PROTOCOL.md | Select-String -Pattern 'WORK_ORDER|PREFLIGHT|CLOSURE|MUST|SHALL|required|mandatory|optional' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| # WORK_ORDER_PROTOCOL — v1.0
+  15| 3. **תוצר חובה — `PREFLIGHT_<Blocker>.md`** בארבעה חלקים:
+  21| 5. אסור commit קוד לפני שקיים PREFLIGHT בהכרעת PROCEED.
+  59| 6. ✅ ה-`PREFLIGHT_<Blocker>.md` נשמר ומצורף לדו"ח הסיום.
+  76| **D-0XX — אימוץ WORK_ORDER_PROTOCOL v1.0**
+  78| **החלטה:** כל Blocker מבוצע תחת פרוטוקול מחייב: Pre-Flight Review עם תוצר `PREFLIGHT_<Blocker>.md` (הנחות מאומתות / לא-ניתנות-לאימות / סטיות / הכרעה) ועצירה על סתירה מהותית לפני כל שינוי; דו"ח סיום אחיד הכולל סעיף Lessons Learned עם חובת עדכון מסמכים או Follow-up מפורש לכל ממצא; **Definition of Done אחיד בן תשעה סעיפים (§4)** — הכרזת "Closed" מותרת רק כשכולם מסומנים, אחרת "Partially Closed" עם פירוט החסר; ו**מדד פרויקט קצר בכל סיום Blocker** (§3.11). הפרוטוקול **FROZEN** עם אימוצו.
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S2-A. ARCHITECTURE HEADINGS ===" -ForegroundColor Cyan
+
+=== S2-A. ARCHITECTURE HEADINGS ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/ARCHITECTURE.md | Select-String -Pattern '^#{1,6}\s' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   1| # ARCHITECTURE — v1.1 Final
+   4| ## שכבות
+  26| ## עקרונות (מחייבים)
+  35| ## לולאת האירועים (פסאודו)
+  52| ## זרימת נתונים (Phase 0)
+  55| ## מודולים — אחריות בשורה
+  74| ## בדיקות-על
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S2-B. ARCHITECTURE MODULE/PATH CLAIMS ===" -ForegroundColor Cyan
+
+=== S2-B. ARCHITECTURE MODULE/PATH CLAIMS ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/ARCHITECTURE.md | Select-String -Pattern 'src/|\.py|scripts/|module|engine|Engine|layer|Layer' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+  13|    ├─ Session Engine (NY) ←→ Calendar Engine (Blackout)
+  15|    ├─ FVG Engine (detect · mitigation · ranking) + iFVG
+PS C:\Users\User\Trading-startegy-ai> Write-Host "`n=== S2-C. ARCHITECTURE GOVERNANCE REFS ===" -ForegroundColor Cyan
+
+=== S2-C. ARCHITECTURE GOVERNANCE REFS ===
+PS C:\Users\User\Trading-startegy-ai> git show f9a8d22:docs/ARCHITECTURE.md | Select-String -Pattern 'B-\d|KI-\d|D-\d|RA-\d|News|Calendar|holdout|Holdout|lookahead|Lookahead|determinis' | ForEach-Object { "{0,4}| {1}" -f $_.LineNumber, $_.Line }
+   9|                   fvg_registry · bias_history · news · sessions · equity · scores
+  13|    ├─ Session Engine (NY) ←→ Calendar Engine (Blackout)
+  27| 1. **No-Lookahead by Construction:** כל אובייקט נגזר נושא `created_at / confirmed_at / invalidated_at`; האסטרטגיה רואה רק `confirmed_at ≤ now` דרך MarketContext.
+  32| 6. **Hold-Out פיזי:** `data/holdout/` נפרד; Loader מסרב בלי דגל מתועד.
+  33| 7. **עצמאות ממקור נתונים (D-037):** כל מודול משכבת ה-Structure ומעלה צורך רק את הטיפוסים הנייטרליים ממקור (`Tick`/`Bar`/`MarketContext`) או את הפרוטוקול `DataProvider` (INTERFACES.md) — לעולם לא `DukascopyDownloader` באופן קונקרטי, ולעולם לא ענף קוד המבחין בין "סינתטי" ל"אמיתי". אותו קוד בדיוק חייב לרוץ זהה בין Fixture סינתטי (Phase 1–2) לבין דאטה אמיתי מ-Dukascopy (מ-Phase 3 ואילך) — ההבדל היחיד המותר הוא איזה מימוש של `DataProvider`/אילו אובייקטי `Bar` הוזרקו לריצה. זה מה שהופך את הבדיקות ב-Fixtures ל-Phase 1–2 לתקפות: הן בודקות בדיוק את אותו קוד שירוץ על הדאטה האמיתי, לא חיקוי נפרד שלו.
+  42|     if session.in_window and not calendar.blackout(ts):   # שלב ב
+  63| | session / calendar | חלון NY, Blackout, effective_window, תגי חג |
+  75| Prefix-Consistency (גלאי Lookahead, חובה ב-CI) · Golden Regression · DST Boundaries · Race-09:00 · Cost Sanity · Reproducibility (שתי ריצות זהות → יומן זהה).
+PS C:\Users\User\Trading-startegy-ai> Stop-Transcript
+**********************
+Windows PowerShell transcript end
+End time: 20260811174113
+**********************
