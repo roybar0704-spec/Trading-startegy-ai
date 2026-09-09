@@ -94,13 +94,14 @@ def _build_cost_model(parameters: Parameters) -> StaticCostModel:
 
 def _build_arms(
     rules: RulesV1, parameters: Parameters, run_config: RunConfig, calendar: CalendarEngine,
+    run_id: str,
 ) -> list[PortfolioArm]:
     arms = []
     for entry in run_config.arms.entry_models:
         for sl_anchor in run_config.arms.sl_anchors:
             arm_id = ArmId(entry=entry, sl_anchor=sl_anchor)
             portfolio = Portfolio(
-                portfolio_id=f"P-{entry}-{sl_anchor}", arm=arm_id,
+                portfolio_id=f"P-{run_id}-{entry}-{sl_anchor}", arm=arm_id,
                 initial_equity=parameters.initial_equity_usd,
             )
             risk = RiskEngine(
@@ -196,7 +197,7 @@ def build_orchestrator(
     return Orchestrator(
         bars_1m=bars_1m, bars_5m=bars_5m, bars_4h=bars_4h, ticks=ticks,
         session=session, calendar=calendar,
-        arms=_build_arms(rules, parameters, run_config, calendar),
+        arms=_build_arms(rules, parameters, run_config, calendar, run_id),
         entry_models=_build_entry_models(run_config, session),
         displacement_model=displacement_model, displacement_params=displacement_params,
         cost_model=_build_cost_model(parameters),
